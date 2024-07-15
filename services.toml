@@ -1,0 +1,6 @@
+lang = "Rust"
+dir = "."
+repo = "ginger-society/metadata-repo"
+
+[services.IAMService]
+dev = "http://localhost:8080"
