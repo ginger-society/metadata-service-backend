@@ -5,4 +5,4 @@ orm = "Diesel"
 root = "src/models"
 
 [tables]
-names = ["dbschema", "branch", "templates", "service", "service_envs"]
+names = ["dbschema", "dbschema_branch", "templates", "service", "service_envs"]

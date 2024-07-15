@@ -17,10 +17,7 @@ use IAMService::models::MessageResponse as OtherMessageResponse;
 /// This is a description. <br />You can do simple html <br /> like <b>this<b/>
 #[openapi()]
 #[get("/")]
-pub fn index(
-    rdb: &State<r2d2::Pool<ConnectionManager<PgConnection>>>,
-    cache: &State<Pool<RedisConnectionManager>>,
-) -> Json<MessageResponse> {
+pub fn index() -> Json<MessageResponse> {
     Json(MessageResponse {
         message: "Ok".to_string(),
     })
@@ -56,13 +53,6 @@ pub async fn route2(
     }
 
     println!("{:?}", groups);
-
-    // match identity_get_group_memberships(&iam_service_config.0).await {
-    //     Ok(groups) => {
-    //         println!("{:?}", groups)
-    //     }
-    //     Err(_) => {}
-    // }
 
     Json(MessageResponse {
         message: format!("Hello, {}! This is a protected route.", claims.user_id),
