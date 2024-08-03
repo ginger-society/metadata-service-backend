@@ -4,6 +4,7 @@ use fairings::auth::AuthFairing;
 use rocket::Rocket;
 use rocket_okapi::settings::UrlObject;
 
+use crate::routes::metadata;
 use db::redis::create_redis_pool;
 use dotenv::dotenv;
 use rocket::Build;
@@ -30,15 +31,31 @@ fn rocket() -> Rocket<Build> {
         .attach(fairings::cors::CORS)
         .attach(prometheus.clone())
         .attach(AuthFairing)
-        .mount("/", openapi_get_routes![routes::index, routes::route2,])
         .mount(
-            "/api-docs",
+            "/metadata/",
+            openapi_get_routes![
+                routes::index,
+                routes::route2,
+                metadata::create_dbschema,
+                metadata::get_dbschemas,
+                metadata::update_dbschema,
+                metadata::get_dbschema_by_id,
+                metadata::create_dbschema_branch,
+                metadata::update_dbschema_branch,
+                metadata::update_or_create_service,
+                metadata::get_services_and_envs,
+                metadata::get_service_and_env_by_id,
+                metadata::get_service_by_id
+            ],
+        )
+        .mount(
+            "/metadata/api-docs",
             make_swagger_ui(&SwaggerUIConfig {
                 url: "../openapi.json".to_owned(),
                 ..Default::default()
             }),
         )
-        .mount("/metrics", prometheus);
+        .mount("/metadata/metrics", prometheus);
 
     match env::var("MONGO_URI") {
         Ok(mongo_uri) => match env::var("MONGO_DB_NAME") {

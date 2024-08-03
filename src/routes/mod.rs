@@ -10,10 +10,11 @@ use crate::middlewares::IAMService_config::IAMService_config;
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket_okapi::openapi;
-use IAMService::apis::default_api::{
-    identity_get_group_memberships, routes_index, routes_protected_route,
-};
+use IAMService::apis::default_api::{identity_get_group_memberships, routes_index};
 use IAMService::models::MessageResponse as OtherMessageResponse;
+
+pub mod metadata;
+
 /// This is a description. <br />You can do simple html <br /> like <b>this<b/>
 #[openapi()]
 #[get("/")]
@@ -41,7 +42,7 @@ pub async fn route2(
     iam_service_config: IAMService_config,
     groups: GroupMemberships,
 ) -> Json<MessageResponse> {
-    match routes_protected_route(&iam_service_config.0).await {
+    match routes_index(&iam_service_config.0).await {
         Ok(status) => println!("{:?}", status),
         Err(e) => {
             // Handle the error appropriately

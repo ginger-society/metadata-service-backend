@@ -10,5 +10,9 @@ limits = {forms = 32768}
 log_level = "critical"
 port = 8081
 read_timeout = 5
-secret_key = "wsN27BdC/l2OgjxwDmaxOGzSosNt/r1SiZViX0dUX4c="
+secret_key = "wAH6XoauwlQ0DZM65+LivbFo2j14mJ48iy2PC+hW+es="
 write_timeout = 5
+
+[global]
+address = "${ROCKET_ADDRESS:0.0.0.0}"
+port = "${ROCKET_PORT:8000}"

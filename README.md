@@ -14,3 +14,25 @@ DB : https://github.com/ginger-society/metadata-service-db
 ### unit testing
 > cargo test
 
+
+
+Build : 
+
+```sh
+docker build . -t gingersociety/metadata-service-api-stage --platform=linux/amd64
+```
+
+
+Push : 
+
+```sh
+docker push gingersociety/metadata-service-api-stage
+```
+
+
+
+to restart the deployment / upgrade the pod image version 
+```sh 
+
+ kubectl rollout restart deployment metadata-service-api-deployment
+```

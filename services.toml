@@ -1,6 +1,15 @@
 lang = "Rust"
 dir = "."
-repo = "ginger-society/metadata-repo"
+spec_url = "/openapi.json"
+service_type = "RPCEndpoint"
 
 [services.IAMService]
-dev = "http://localhost:8080"
+stage = "https://api-staging.gingersociety.org/iam"
+stage_k8 = "http://iam-service-api-service/iam"
+
+[urls]
+dev = "http://localhost:8081"
+prod = "http://localhost:8081"
+prod_k8 = "http://localhost:8081"
+stage = "https://api-staging.gingersociety.org/metadata"
+stage_k8 = "http://metadata-service-api-service/metadata"

@@ -2,7 +2,7 @@
 #![allow(non_camel_case_types)]
 use diesel::Insertable;
 use chrono::NaiveDate;
-use diesel::{deserialize::Queryable, table, Selectable};
+use diesel::{deserialize::Queryable, Selectable};
 use schemars::JsonSchema;
 use serde::Serialize;
 use chrono::offset::Utc;
@@ -25,9 +25,11 @@ pub mod schema {
             created_at ->Timestamptz,
             updated_at ->Timestamptz,
             #[max_length = 10000]
-            data ->Varchar,
+            data ->Nullable<Varchar>,
             #[max_length = 500]
             group_id ->Varchar,
+            #[max_length = 100]
+            identifier ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -39,7 +41,7 @@ pub mod schema {
             #[max_length = 100]
             branch_name ->Varchar,
             #[max_length = 10000]
-            data ->Varchar,
+            data ->Nullable<Varchar>,
             created_at ->Timestamptz,
             updated_at ->Timestamptz,
             merged ->Bool,
@@ -68,7 +70,15 @@ pub mod schema {
             #[max_length = 50]
             identifier ->Varchar,
             #[max_length = 100]
-            group_id ->Nullable<Varchar>,
+            group_id ->Varchar,
+            #[max_length = 100]
+            db_schema_id ->Nullable<Varchar>,
+            #[max_length = 1000]
+            tables_json ->Nullable<Varchar>,
+            #[max_length = 1000]
+            dependencies_json ->Nullable<Varchar>,
+            service_type ->Varchar,
+            lang ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -82,6 +92,9 @@ pub mod schema {
             env ->Varchar,
             #[max_length = 100]
             base_url ->Varchar,
+            updated_at ->Nullable<Timestamptz>,
+            #[max_length = 50]
+            version ->Varchar,
             id ->BigInt,
             
         }
@@ -123,8 +136,9 @@ pub struct Dbschema {
     pub version:String,
     pub created_at:DateTime<Utc>,
     pub updated_at:DateTime<Utc>,
-    pub data:String,
+    pub data:Option<String>,
     pub group_id:String,
+    pub identifier:Option<String>,
     pub id:i64,
     
 }
@@ -137,7 +151,7 @@ pub struct Dbschema {
 pub struct Dbschema_Branch {
     pub parent_id:i64,
     pub branch_name:String,
-    pub data:String,
+    pub data:Option<String>,
     pub created_at:DateTime<Utc>,
     pub updated_at:DateTime<Utc>,
     pub merged:bool,
@@ -166,7 +180,12 @@ pub struct Templates {
 #[diesel(table_name = service)]
 pub struct Service {
     pub identifier:String,
-    pub group_id:Option<String>,
+    pub group_id:String,
+    pub db_schema_id:Option<String>,
+    pub tables_json:Option<String>,
+    pub dependencies_json:Option<String>,
+    pub service_type:String,
+    pub lang:Option<String>,
     pub id:i64,
     
 }
@@ -181,6 +200,8 @@ pub struct Service_Envs {
     pub spec:String,
     pub env:String,
     pub base_url:String,
+    pub updated_at:Option<DateTime<Utc>>,
+    pub version:String,
     pub id:i64,
     
 }
@@ -198,8 +219,9 @@ pub struct DbschemaInsertable {
     pub version:String,
     pub created_at:DateTime<Utc>,
     pub updated_at:DateTime<Utc>,
-    pub data:String,
+    pub data:Option<String>,
     pub group_id:String,
+    pub identifier:Option<String>,
     
 }
 
@@ -211,7 +233,7 @@ pub struct DbschemaInsertable {
 pub struct Dbschema_BranchInsertable {
     pub parent_id:i64,
     pub branch_name:String,
-    pub data:String,
+    pub data:Option<String>,
     pub created_at:DateTime<Utc>,
     pub updated_at:DateTime<Utc>,
     pub merged:bool,
@@ -238,7 +260,12 @@ pub struct TemplatesInsertable {
 #[diesel(table_name = service)]
 pub struct ServiceInsertable {
     pub identifier:String,
-    pub group_id:Option<String>,
+    pub group_id:String,
+    pub db_schema_id:Option<String>,
+    pub tables_json:Option<String>,
+    pub dependencies_json:Option<String>,
+    pub service_type:String,
+    pub lang:Option<String>,
     
 }
 
@@ -252,5 +279,7 @@ pub struct Service_EnvsInsertable {
     pub spec:String,
     pub env:String,
     pub base_url:String,
+    pub updated_at:Option<DateTime<Utc>>,
+    pub version:String,
     
 }
