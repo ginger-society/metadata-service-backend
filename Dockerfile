@@ -8,6 +8,10 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . .
 
+ARG GINGER_TOKEN
+ENV GINGER_TOKEN=$GINGER_TOKEN
+
+
 RUN curl "https://ginger-connector-binaries.s3.ap-south-1.amazonaws.com/0.1.0/x86_64-unknown-linux-gnu/ginger-connector" -o "ginger-connector"
 
 RUN chmod u+x ginger-connector
