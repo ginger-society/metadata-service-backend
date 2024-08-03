@@ -16,7 +16,7 @@ RUN curl "https://ginger-connector-binaries.s3.ap-south-1.amazonaws.com/0.1.0/x8
 
 RUN chmod u+x ginger-connector
 
-RUN ./ginger-connector connect stage
+RUN ./ginger-connector connect stage-k8
 
 # Build the application in release mode
 RUN cargo build --release
