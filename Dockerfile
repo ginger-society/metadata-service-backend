@@ -1,12 +1,18 @@
 # First stage: Build the Rust application
 FROM rust:1-slim-bullseye as builder
-RUN apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev
+RUN apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev curl
 
 # Create a new directory for the app
 WORKDIR /app
 
 # Copy the current directory contents into the container at /app
 COPY . .
+
+RUN curl "https://ginger-connector-binaries.s3.ap-south-1.amazonaws.com/0.1.0/x86_64-unknown-linux-gnu/ginger-connector" -o "ginger-connector"
+
+RUN chmod u+x ginger-connector
+
+RUN ginger-connector connect stage
 
 # Build the application in release mode
 RUN cargo build --release

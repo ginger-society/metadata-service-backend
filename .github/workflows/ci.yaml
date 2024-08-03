@@ -1,29 +1,37 @@
-name: CI
+name: Build, Push Docker Image, and Restart Deployment
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "**"
-  pull_request:
-    branches: [main]
-    paths:
-      - "**"
-
-env:
-  CARGO_TERM_COLOR: always
+    branches:
+      - main
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Build
-        run: cargo build --verbose
-      - name: Run tests
-        run: cargo test --verbose
-        env:
-          MONGO_URI: ${{secrets.MONGO_URI}}
-          MONGO_DB_NAME: ${{secrets.MONGO_DB_NAME}}
-          API_KEY: ${{secrets.API_KEY}}
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+    - name: Build Docker image
+      run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/metadata-service-api-stage:latest .
+
+    - name: Push Docker image
+      run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/metadata-service-api-stage:latest
+
+    - name: Set up Kubeconfig
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.STAGING_K8_CONFIG }}" > $HOME/.kube/config
+
+    - name: Install kubectl
+      run: |
+        curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin/kubectl
+
+    - name: Restart Kubernetes deployment
+      run: kubectl rollout restart deployment metadata-service-api-deployment
