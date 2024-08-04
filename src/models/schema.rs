@@ -80,6 +80,10 @@ pub mod schema {
             service_type ->Varchar,
             #[max_length = 50]
             lang ->Nullable<Varchar>,
+            #[max_length = 2000]
+            description ->Nullable<Varchar>,
+            #[max_length = 100]
+            organization_id ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -114,6 +118,10 @@ pub mod schema {
             group_id ->Nullable<Varchar>,
             updated_at ->Timestamptz,
             created_at ->Nullable<Timestamptz>,
+            #[max_length = 2000]
+            description ->Nullable<Varchar>,
+            #[max_length = 100]
+            organization_id ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -208,6 +216,8 @@ pub struct Service {
     pub dependencies_json:Option<String>,
     pub service_type:String,
     pub lang:Option<String>,
+    pub description:Option<String>,
+    pub organization_id:Option<String>,
     pub id:i64,
     
 }
@@ -241,6 +251,8 @@ pub struct Package {
     pub group_id:Option<String>,
     pub updated_at:DateTime<Utc>,
     pub created_at:Option<DateTime<Utc>>,
+    pub description:Option<String>,
+    pub organization_id:Option<String>,
     pub id:i64,
     
 }
@@ -305,6 +317,8 @@ pub struct ServiceInsertable {
     pub dependencies_json:Option<String>,
     pub service_type:String,
     pub lang:Option<String>,
+    pub description:Option<String>,
+    pub organization_id:Option<String>,
     
 }
 
@@ -336,5 +350,7 @@ pub struct PackageInsertable {
     pub group_id:Option<String>,
     pub updated_at:DateTime<Utc>,
     pub created_at:Option<DateTime<Utc>>,
+    pub description:Option<String>,
+    pub organization_id:Option<String>,
     
 }

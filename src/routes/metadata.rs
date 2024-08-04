@@ -490,6 +490,8 @@ pub struct UpdateServiceRequest {
     pub service_type: Option<String>,
     pub version: Option<String>,
     pub lang: Option<String>,
+    pub description: String,
+    pub organization_id: String,
 }
 
 #[derive(Debug, Serialize, JsonSchema)]
@@ -583,6 +585,8 @@ pub async fn update_or_create_service(
             tables_json: Some(serde_json::to_string(&service_request.tables).unwrap()),
             dependencies_json: Some(serde_json::to_string(&service_request.dependencies).unwrap()),
             lang: service_request.lang.clone(),
+            organization_id: Some(service_request.organization_id.clone()),
+            description: Some(service_request.description.clone()),
         };
 
         diesel::insert_into(service)
@@ -865,6 +869,8 @@ pub struct CreateOrUpdatePackageRequest {
     pub package_type: String,
     pub lang: String,
     pub version: String,
+    pub description: String,
+    pub organization_id: String,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -946,6 +952,8 @@ pub async fn create_or_update_package(
             created_at: Some(Utc::now()),
             updated_at: Utc::now(),
             group_id: Some(group_response.identifier), // Use the group_id from IAM service response
+            description: Some(package_request.description.clone()),
+            organization_id: Some(package_request.organization_id.clone()),
         };
 
         diesel::insert_into(package)
