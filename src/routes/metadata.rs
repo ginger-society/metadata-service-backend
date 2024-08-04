@@ -690,6 +690,8 @@ pub struct ServicesTrimmedResponse {
     pub db_schema_id: Option<String>,
     pub service_type: Option<String>,
     pub lang: Option<String>,
+    pub description: String,
+    pub organization_id: String,
 }
 
 #[openapi]
@@ -757,6 +759,8 @@ pub fn get_services_and_envs(
                 db_schema_id: s.db_schema_id,
                 service_type: Some(s.service_type),
                 lang: s.lang,
+                organization_id: s.organization_id.unwrap_or(String::from("")),
+                description: s.description.unwrap_or(String::from("")),
             })
         })
         .collect::<Result<Vec<ServicesTrimmedResponse>, rocket::http::Status>>()?;
