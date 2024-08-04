@@ -7,4 +7,4 @@ schema_id = "0571964c-0da3-4bf1-84d3-041797650ffc"
 branch = "main"
 
 [tables]
-names = ["dbschema", "dbschema_branch", "templates", "service", "service_envs"]
+names = ["dbschema", "dbschema_branch", "templates", "service", "service_envs", "package"]

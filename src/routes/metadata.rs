@@ -2,8 +2,8 @@ use crate::middlewares::groups::GroupMemberships;
 use crate::middlewares::jwt::Claims;
 use crate::middlewares::IAMService_config::IAMService_config;
 use crate::models::schema::{
-    Dbschema, DbschemaInsertable, Dbschema_Branch, Dbschema_BranchInsertable, Service,
-    ServiceInsertable, Service_Envs, Service_EnvsInsertable,
+    Dbschema, DbschemaInsertable, Dbschema_Branch, Dbschema_BranchInsertable, Package,
+    PackageInsertable, Service, ServiceInsertable, Service_Envs, Service_EnvsInsertable,
 };
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
@@ -857,4 +857,168 @@ pub fn get_service_by_id(
     };
 
     Ok(Json(response))
+}
+
+#[derive(Deserialize, Serialize, JsonSchema)]
+pub struct CreateOrUpdatePackageRequest {
+    pub identifier: String,
+    pub package_type: String,
+    pub lang: String,
+    pub version: String,
+}
+
+#[derive(Serialize, JsonSchema)]
+pub struct CreateOrUpdatePackageResponse {
+    pub message: String,
+    pub package_id: i64,
+}
+
+#[openapi()]
+#[post("/create_or_update_package", data = "<package_request>")]
+pub async fn create_or_update_package(
+    package_request: Json<CreateOrUpdatePackageRequest>,
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    iam_service_config: IAMService_config,
+    _claims: Claims,
+) -> Result<status::Created<Json<CreateOrUpdatePackageResponse>>, status::Custom<String>> {
+    use crate::models::schema::schema::package::dsl::*;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let package_identifier = &package_request.identifier;
+
+    // Check if the package exists
+    let existing_package = package
+        .filter(identifier.eq(package_identifier))
+        .first::<Package>(&mut conn)
+        .optional()
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving package".to_string(),
+            )
+        })?;
+
+    let package_id = if let Some(p) = existing_package {
+        diesel::update(package.filter(id.eq(p.id)))
+            .set((
+                package_type.eq(&package_request.package_type),
+                lang.eq(&package_request.lang),
+                version.eq(&package_request.version),
+                updated_at.eq(Utc::now()),
+            ))
+            .execute(&mut conn)
+            .map_err(|_| {
+                status::Custom(
+                    Status::InternalServerError,
+                    "Error updating package".to_string(),
+                )
+            })?;
+
+        p.id
+    } else {
+        // Create a new group in IAM service
+        let group_uuid = Uuid::new_v4().to_string();
+
+        let group_response = identity_create_group(
+            &iam_service_config.0,
+            IdentityCreateGroupParams {
+                create_group_request: CreateGroupRequest::new(group_uuid.clone()),
+            },
+        )
+        .await
+        .map_err(|e| {
+            println!("{:?}", e);
+            status::Custom(Status::InternalServerError, e.to_string())
+        })?;
+
+        // Create a new package
+        let new_package = PackageInsertable {
+            identifier: package_identifier.clone(),
+            package_type: package_request.package_type.clone(),
+            lang: package_request.lang.clone(),
+            version: package_request.version.clone(),
+            created_at: Some(Utc::now()),
+            updated_at: Utc::now(),
+            group_id: Some(group_response.identifier), // Use the group_id from IAM service response
+        };
+
+        diesel::insert_into(package)
+            .values(&new_package)
+            .returning(id)
+            .get_result::<i64>(&mut conn)
+            .map_err(|_| {
+                status::Custom(
+                    Status::InternalServerError,
+                    "Error creating package".to_string(),
+                )
+            })?
+    };
+
+    let response = CreateOrUpdatePackageResponse {
+        message: "Package created or updated successfully".to_string(),
+        package_id,
+    };
+
+    Ok(status::Created::new("/package").body(Json(response)))
+}
+
+#[derive(Serialize, JsonSchema)]
+pub struct PackageResponse {
+    pub identifier: String,
+    pub package_type: String,
+    pub lang: String,
+    pub version: String,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[openapi()]
+#[get("/packages")]
+pub async fn get_user_packages(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    _claims: Claims,
+    groups: GroupMemberships,
+) -> Result<Json<Vec<PackageResponse>>, status::Custom<String>> {
+    use crate::models::schema::schema::package::dsl::*;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let user_id = _claims.user_id;
+
+    // Get all group_ids the user is a member of
+    let memberships: Vec<String> = groups.0;
+
+    // Get all packages associated with those group_ids
+    let packages: Vec<Package> = package
+        .filter(group_id.eq_any(memberships))
+        .load::<Package>(&mut conn)
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving packages".to_string(),
+            )
+        })?;
+
+    let package_responses: Vec<PackageResponse> = packages
+        .into_iter()
+        .map(|p| PackageResponse {
+            identifier: p.identifier,
+            package_type: p.package_type,
+            lang: p.lang,
+            version: p.version,
+            updated_at: p.updated_at,
+        })
+        .collect();
+
+    Ok(Json(package_responses))
 }

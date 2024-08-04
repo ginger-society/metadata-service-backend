@@ -78,6 +78,7 @@ pub mod schema {
             #[max_length = 1000]
             dependencies_json ->Nullable<Varchar>,
             service_type ->Varchar,
+            #[max_length = 50]
             lang ->Nullable<Varchar>,
             id ->BigInt,
             
@@ -93,8 +94,26 @@ pub mod schema {
             #[max_length = 100]
             base_url ->Varchar,
             updated_at ->Nullable<Timestamptz>,
-            #[max_length = 50]
+            #[max_length = 30]
             version ->Varchar,
+            id ->BigInt,
+            
+        }
+    }
+    
+    table! {
+        package (id) {
+            #[max_length = 100]
+            identifier ->Varchar,
+            package_type ->Varchar,
+            #[max_length = 50]
+            lang ->Varchar,
+            #[max_length = 30]
+            version ->Varchar,
+            #[max_length = 100]
+            group_id ->Nullable<Varchar>,
+            updated_at ->Timestamptz,
+            created_at ->Nullable<Timestamptz>,
             id ->BigInt,
             
         }
@@ -111,6 +130,8 @@ pub mod schema {
     
         diesel::joinable!(service_envs -> service (parent_id));
     
+        
+    
 
     diesel::allow_tables_to_appear_in_same_query!(
         dbschema,
@@ -118,11 +139,12 @@ pub mod schema {
         templates,
         service,
         service_envs,
+        package,
         
     );
 }
 
-use schema::{ dbschema,dbschema_branch,templates,service,service_envs, };
+use schema::{ dbschema,dbschema_branch,templates,service,service_envs,package, };
 
 
 
@@ -207,6 +229,23 @@ pub struct Service_Envs {
 }
 
 
+#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema,Identifiable)]
+
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(table_name = package)]
+pub struct Package {
+    pub identifier:String,
+    pub package_type:String,
+    pub lang:String,
+    pub version:String,
+    pub group_id:Option<String>,
+    pub updated_at:DateTime<Utc>,
+    pub created_at:Option<DateTime<Utc>>,
+    pub id:i64,
+    
+}
+
+
 
 
 #[derive(Queryable, Debug, Selectable, Serialize, Deserialize, Insertable, JsonSchema)]
@@ -281,5 +320,21 @@ pub struct Service_EnvsInsertable {
     pub base_url:String,
     pub updated_at:Option<DateTime<Utc>>,
     pub version:String,
+    
+}
+
+
+#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, Insertable, JsonSchema)]
+
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(table_name = package)]
+pub struct PackageInsertable {
+    pub identifier:String,
+    pub package_type:String,
+    pub lang:String,
+    pub version:String,
+    pub group_id:Option<String>,
+    pub updated_at:DateTime<Utc>,
+    pub created_at:Option<DateTime<Utc>>,
     
 }

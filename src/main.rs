@@ -45,7 +45,9 @@ fn rocket() -> Rocket<Build> {
                 metadata::update_or_create_service,
                 metadata::get_services_and_envs,
                 metadata::get_service_and_env_by_id,
-                metadata::get_service_by_id
+                metadata::get_service_by_id,
+                metadata::create_or_update_package,
+                metadata::get_user_packages
             ],
         )
         .mount(
