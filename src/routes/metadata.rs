@@ -817,6 +817,8 @@ pub struct ServiceResponse {
     pub db_schema_id: String,
     pub dependencies: Vec<String>,
     pub tables: Vec<String>,
+    pub description: String,
+    pub organization_id: String,
 }
 
 #[openapi]
@@ -858,6 +860,8 @@ pub fn get_service_by_id(
         db_schema_id: service_item.db_schema_id.unwrap(),
         dependencies: dependencies,
         tables: tables,
+        organization_id: service_item.organization_id.unwrap_or(String::from("")),
+        description: service_item.description.unwrap_or(String::from("")),
     };
 
     Ok(Json(response))
@@ -983,6 +987,8 @@ pub struct PackageResponse {
     pub lang: String,
     pub version: String,
     pub updated_at: DateTime<Utc>,
+    pub description: String,
+    pub organization_id: String,
 }
 
 #[openapi()]
@@ -1025,6 +1031,8 @@ pub async fn get_user_packages(
             lang: p.lang,
             version: p.version,
             updated_at: p.updated_at,
+            description: p.description.unwrap_or(String::from("")),
+            organization_id: p.organization_id.unwrap_or(String::from("")),
         })
         .collect();
 

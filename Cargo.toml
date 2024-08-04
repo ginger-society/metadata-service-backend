@@ -31,3 +31,6 @@ serde_json = "1.0"
 serde_with = "3.7.0"
 uuid = "1.10.0"
 winnow = "0.6.13"
+
+[package.metadata]
+organization = "ginger-society"
