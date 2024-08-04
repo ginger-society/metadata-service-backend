@@ -539,6 +539,8 @@ pub async fn update_or_create_service(
         diesel::update(service.filter(id.eq(s.id)))
             .set((
                 db_schema_id.eq(&service_request.db_schema_id),
+                description.eq(&service_request.description),
+                organization_id.eq(&service_request.organization_id),
                 service_type.eq(&service_request.service_type.clone().unwrap()),
                 lang.eq(&service_request.lang.clone().unwrap()),
                 dependencies_json.eq(Some(
