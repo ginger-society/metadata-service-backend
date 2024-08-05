@@ -30,6 +30,8 @@ pub mod schema {
             group_id ->Varchar,
             #[max_length = 100]
             identifier ->Nullable<Varchar>,
+            #[max_length = 100]
+            organization_id ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -92,7 +94,7 @@ pub mod schema {
     table! {
         service_envs (id) {
             parent_id ->BigInt,
-            #[max_length = 10000]
+            #[max_length = 35000]
             spec ->Varchar,
             env ->Varchar,
             #[max_length = 100]
@@ -169,6 +171,7 @@ pub struct Dbschema {
     pub data:Option<String>,
     pub group_id:String,
     pub identifier:Option<String>,
+    pub organization_id:Option<String>,
     pub id:i64,
     
 }
@@ -273,6 +276,7 @@ pub struct DbschemaInsertable {
     pub data:Option<String>,
     pub group_id:String,
     pub identifier:Option<String>,
+    pub organization_id:Option<String>,
     
 }
 
