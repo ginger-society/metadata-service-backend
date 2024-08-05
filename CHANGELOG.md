@@ -1,6 +1,23 @@
+## 0.2.0-nightly.0 - 2024-08-05
+chore:
+ - [a41aa47789](a41aa47789d5d76c73d0864617468e7e2dd90f2f) (Ginger Society Admin) chore: version bump to 0.2.0-nightly.0
+	
 ## 0.1.0-nightly.0 - 2024-08-05
-feat
- - [94f0667aa9](94f0667aa99a4448f814e22925e3041360d53ab8) (Ginger Society Admin) feat added org id in db schema
+fix:
+ - [b1730728de](b1730728de2a881d6dafb26dff5b3b0355be51ff) (Ginger Society Admin) fix: added description and org in update query
+	
+ - [78c73e4ba1](78c73e4ba19c91aceba5e35140e28e8e5be13e03) (Ginger Society Admin) fix: docker file fixes
+	
+ - [60c90ca193](60c90ca193d8070bc256612459bf5b9f99ffde69) (Ginger Society Admin) fix: changed env for connector in pipeline
+	
+ - [55a1f6edf5](55a1f6edf5ffec148ef2ab4e1523e5a14fc9e84c) (Ginger Society Admin) fix: added ginger token in env in github actions
+	
+ - [eedbb92d03](eedbb92d03ec233b3f418c7ceb5a3afbf909f3f9) (Ginger Society Admin) fix: pipeline changes
+	
+chore:
+ - [13a8c013f0](13a8c013f0253e5eea56fbfdbd37fd58540d8ac8) (Ginger Society Admin) chore: version bump to 0.1.0-nightly.0
+	
+ - [0bffe65578](0bffe65578aa6f9a9e177a6db6ca2b569af8cfbe) (Ginger Society Admin) chore: first commit
 	
 feat:
  - [96bc8988fd](96bc8988fd8e4b81cfe69eadd8dfe247433c3d8e) (Ginger Society Admin) feat: added orgid in getschema response
@@ -23,19 +40,6 @@ feat:
 	
  - [ea8b653975](ea8b653975818e1208edeaf1f83a314b7247d689) (Ginger Society Admin) feat: minor cleanup
 	
-fix:
- - [b1730728de](b1730728de2a881d6dafb26dff5b3b0355be51ff) (Ginger Society Admin) fix: added description and org in update query
-	
- - [78c73e4ba1](78c73e4ba19c91aceba5e35140e28e8e5be13e03) (Ginger Society Admin) fix: docker file fixes
-	
- - [60c90ca193](60c90ca193d8070bc256612459bf5b9f99ffde69) (Ginger Society Admin) fix: changed env for connector in pipeline
-	
- - [55a1f6edf5](55a1f6edf5ffec148ef2ab4e1523e5a14fc9e84c) (Ginger Society Admin) fix: added ginger token in env in github actions
-	
- - [eedbb92d03](eedbb92d03ec233b3f418c7ceb5a3afbf909f3f9) (Ginger Society Admin) fix: pipeline changes
-	
-chore:
- - [13a8c013f0](13a8c013f0253e5eea56fbfdbd37fd58540d8ac8) (Ginger Society Admin) chore: version bump to 0.1.0-nightly.0
-	
- - [0bffe65578](0bffe65578aa6f9a9e177a6db6ca2b569af8cfbe) (Ginger Society Admin) chore: first commit
+feat
+ - [94f0667aa9](94f0667aa99a4448f814e22925e3041360d53ab8) (Ginger Society Admin) feat added org id in db schema
 	
