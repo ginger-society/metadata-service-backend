@@ -42,6 +42,7 @@ pub struct GetDbschemaResponse {
     pub version: String,
     pub updated_at: chrono::DateTime<Utc>,
     pub identifier: Option<String>,
+    pub organization_id: String,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -209,6 +210,7 @@ pub fn get_dbschemas(
             version: db_schema_.version,
             updated_at: db_schema_.updated_at,
             identifier: db_schema_.identifier,
+            organization_id: db_schema_.organization_id.unwrap(),
         })
         .collect();
 
