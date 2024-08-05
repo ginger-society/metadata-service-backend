@@ -60,6 +60,7 @@ pub struct GetDbschemaByIdResponse {
 pub struct UpdateDbschemaRequest {
     pub name: String,
     pub description: Option<String>,
+    pub organisation_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -234,6 +235,7 @@ pub fn update_dbschema(
         .set((
             name.eq(update_request.name.clone()),
             description.eq(update_request.description.clone()),
+            organization_id.eq(update_request.organisation_id.clone()),
         ))
         .execute(&mut conn)
         .map_err(|_| {
