@@ -1,6 +1,7 @@
 use crate::middlewares::groups::GroupMemberships;
 use crate::middlewares::jwt::Claims;
 use crate::middlewares::IAMService_config::IAMService_config;
+use crate::models::schema::schema::dbschema::organization_id;
 use crate::models::schema::{
     Dbschema, DbschemaInsertable, Dbschema_Branch, Dbschema_BranchInsertable, Package,
     PackageInsertable, Service, ServiceInsertable, Service_Envs, Service_EnvsInsertable,
@@ -777,8 +778,9 @@ pub fn get_services_and_envs(
 }
 
 #[openapi]
-#[get("/services-and-envs/<service_identifier>/<env>")]
+#[get("/services-and-envs/<org_id>/<service_identifier>/<env>")]
 pub fn get_service_and_env_by_id(
+    org_id: String,
     service_identifier: String,
     env: String,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
@@ -802,6 +804,7 @@ pub fn get_service_and_env_by_id(
                 .eq(service_identifier)
                 .and(group_id.eq_any(&group_ids)),
         )
+        .filter(organization_id.eq(org_id))
         .first::<Service>(&mut conn)
         .map_err(|_| rocket::http::Status::NotFound)?;
 
