@@ -21,11 +21,10 @@ COPY . .
 ARG GINGER_TOKEN
 ENV GINGER_TOKEN=$GINGER_TOKEN
 
-RUN curl "https://ginger-connector-binaries.s3.ap-south-1.amazonaws.com/0.1.0/x86_64-unknown-linux-gnu/ginger-connector" -o "ginger-connector"
+RUN curl "https://ginger-connector-binaries.s3.ap-south-1.amazonaws.com/0.1.0/x86_64-unknown-linux-gnu/ginger-connector" -o "/usr/local/bin/ginger-connector"
+RUN chmod u+x /usr/local/bin/ginger-connector
 
-RUN chmod u+x ginger-connector
-
-RUN ./ginger-connector connect stage-k8
+RUN ginger-connector connect stage-k8
 
 # Build the application in release mode
 RUN cargo build --release
