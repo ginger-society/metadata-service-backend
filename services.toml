@@ -1,15 +1,17 @@
-dir = "."
 lang = "Rust"
-service_type = "RPCEndpoint"
+dir = "."
 spec_url = "/openapi.json"
+service_type = "RPCEndpoint"
 
-[services.IAMService]
+[services."@ginger-society/IAMService"]
 stage = "https://api-staging.gingersociety.org/iam"
 stage_k8 = "http://iam-service-api-service/iam"
 
+[portals_refs]
+
 [urls]
-dev = "http://localhost:8081/metadata"
-prod = "http://localhost:8081"
-prod_k8 = "http://localhost:8081"
 stage = "https://api-staging.gingersociety.org/metadata"
 stage_k8 = "http://metadata-service-api-service/metadata"
+prod = "http://localhost:8081"
+prod_k8 = "http://localhost:8081"
+dev = "http://localhost:8081/metadata"
