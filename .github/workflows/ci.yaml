@@ -13,6 +13,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: Set up cache for Cargo
+      uses: actions/cache@v2
+      with:
+        path: |
+          target
+          Cargo.lock
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+
     - name: Log in to Docker Hub
       run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
@@ -45,6 +55,7 @@ jobs:
       run: ./ginger-connector publish stage
       env:
         GINGER_TOKEN: ${{ secrets.GINGER_TOKEN }}
+
     - name: Publish stage using ginger-connector for k8
       run: ./ginger-connector publish stage-k8
       env:
