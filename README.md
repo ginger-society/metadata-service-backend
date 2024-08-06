@@ -36,3 +36,18 @@ to restart the deployment / upgrade the pod image version
 
  kubectl rollout restart deployment metadata-service-api-deployment
 ```
+
+
+For building base builder image
+```sh
+docker build . -t gingersociety/rust-rocket-api-builder -f Dockerfile.builder --platform=linux/amd64
+
+docker push gingersociety/rust-rocket-api-builder
+```
+
+For building base runner image
+```sh
+docker build . -t gingersociety/rust-rocket-api-runner -f Dockerfile.runner --platform=linux/amd64
+
+docker push gingersociety/rust-rocket-api-runner
+```

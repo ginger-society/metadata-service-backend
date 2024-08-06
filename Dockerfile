@@ -1,16 +1,4 @@
-# First stage: Build the Rust application
-FROM rust:1-slim-bullseye as builder
-RUN apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev curl
-
-# Install Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_current.x | bash -
-RUN apt install -y nodejs
-
-# Install Java
-RUN apt install -y default-jdk
-
-# Install OpenAPI Generator CLI globally
-RUN npm install @openapitools/openapi-generator-cli -g
+FROM gingersociety/rust-rocket-api-builder:latest as builder
 
 # Create a new directory for the app
 WORKDIR /app
@@ -21,24 +9,13 @@ COPY . .
 ARG GINGER_TOKEN
 ENV GINGER_TOKEN=$GINGER_TOKEN
 
-RUN curl "https://ginger-connector-binaries.s3.ap-south-1.amazonaws.com/0.1.0/x86_64-unknown-linux-gnu/ginger-connector" -o "/usr/local/bin/ginger-connector"
-RUN chmod u+x /usr/local/bin/ginger-connector
-
 RUN ginger-connector connect stage-k8
 
 # Build the application in release mode
 RUN cargo build --release
 
 # Second stage: Create the minimal runtime image
-FROM debian:bullseye-slim
-
-# Install necessary dependencies
-RUN apt-get update && apt-get install -y \
-    libssl1.1 \
-    libpq5 \
-    libgcc1 \
-    libc6 \
-    && rm -rf /var/lib/apt/lists/*
+FROM gingersociety/rust-rocket-api-runner:latest
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app/target/release/MetadataService /app/
