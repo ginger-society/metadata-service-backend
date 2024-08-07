@@ -36,8 +36,7 @@ to restart the deployment / upgrade the pod image version
 
  kubectl rollout restart deployment metadata-service-api-deployment
 ```
-
-
+TODO: move these to IAC repo
 For building base builder image
 ```sh
 docker build . -t gingersociety/rust-rocket-api-builder -f Dockerfile.builder --platform=linux/amd64
