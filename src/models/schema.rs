@@ -120,10 +120,10 @@ pub mod schema {
             group_id ->Nullable<Varchar>,
             updated_at ->Timestamptz,
             created_at ->Nullable<Timestamptz>,
-            #[max_length = 2000]
-            description ->Nullable<Varchar>,
             #[max_length = 100]
             organization_id ->Nullable<Varchar>,
+            #[max_length = 25000]
+            description ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -254,8 +254,8 @@ pub struct Package {
     pub group_id:Option<String>,
     pub updated_at:DateTime<Utc>,
     pub created_at:Option<DateTime<Utc>>,
-    pub description:Option<String>,
     pub organization_id:Option<String>,
+    pub description:Option<String>,
     pub id:i64,
     
 }
@@ -354,7 +354,7 @@ pub struct PackageInsertable {
     pub group_id:Option<String>,
     pub updated_at:DateTime<Utc>,
     pub created_at:Option<DateTime<Utc>>,
-    pub description:Option<String>,
     pub organization_id:Option<String>,
+    pub description:Option<String>,
     
 }

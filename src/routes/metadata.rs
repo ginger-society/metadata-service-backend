@@ -47,6 +47,18 @@ pub struct GetDbschemaResponse {
 }
 
 #[derive(Serialize, JsonSchema)]
+pub struct GetDbschemaAndTablesResponse {
+    pub id: i64,
+    pub name: String,
+    pub description: Option<String>,
+    pub version: String,
+    pub updated_at: chrono::DateTime<Utc>,
+    pub identifier: Option<String>,
+    pub organization_id: String,
+    pub tables: Vec<String>,
+}
+
+#[derive(Serialize, JsonSchema)]
 pub struct GetDbschemaByIdResponse {
     pub id: i64,
     pub name: String,
@@ -157,8 +169,6 @@ pub async fn create_dbschema(
         }
         Err(_) => todo!(),
     }
-
-    // })
 }
 
 #[openapi()]
@@ -1052,4 +1062,78 @@ pub async fn get_user_packages(
         .collect();
 
     Ok(Json(package_responses))
+}
+
+#[openapi()]
+#[get("/dbschemas-and-tables")]
+pub fn get_dbschemas_and_tables(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    groups: GroupMemberships,
+    _claims: Claims,
+) -> Result<Json<Vec<GetDbschemaAndTablesResponse>>, status::Custom<String>> {
+    use crate::models::schema::schema::dbschema::dsl::*;
+    use crate::models::schema::schema::dbschema_branch::dsl::*;
+    use serde_json::Value;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let memberships: Vec<String> = groups.0;
+
+    let query = dbschema.filter(group_id.eq_any(memberships)).into_boxed();
+
+    let results = query.load::<Dbschema>(&mut conn).map_err(|_| {
+        status::Custom(
+            Status::InternalServerError,
+            "Error retrieving dbschemas".to_string(),
+        )
+    })?;
+
+    let response = results
+        .into_iter()
+        .map(|db_schema_| {
+            // Attempt to get the main branch data
+            let main_branch_data = dbschema_branch
+                .filter(parent_id.eq(db_schema_.id).and(branch_name.eq("main")))
+                .first::<Dbschema_Branch>(&mut conn)
+                .ok()
+                .and_then(|main_branch| main_branch.data);
+
+            // Use the main branch data if available, otherwise fallback to the db_schema_ data
+            let data_to_use = main_branch_data.as_deref().or(db_schema_.data.as_deref());
+
+            let tables: Vec<String> = match data_to_use {
+                Some(data_str) => match serde_json::from_str::<Value>(data_str) {
+                    Ok(Value::Array(array)) => array
+                        .into_iter()
+                        .filter_map(|element| {
+                            element
+                                .get("data")
+                                .and_then(|d| d.get("name"))
+                                .and_then(|n| n.as_str().map(|s| s.to_string()))
+                        })
+                        .collect(),
+                    _ => Vec::new(),
+                },
+                None => Vec::new(),
+            };
+
+            GetDbschemaAndTablesResponse {
+                id: db_schema_.id,
+                name: db_schema_.name,
+                description: db_schema_.description,
+                version: db_schema_.version,
+                updated_at: db_schema_.updated_at,
+                identifier: db_schema_.identifier,
+                organization_id: db_schema_.organization_id.unwrap(),
+                tables,
+            }
+        })
+        .collect();
+
+    Ok(Json(response))
 }
