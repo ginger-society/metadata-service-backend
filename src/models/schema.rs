@@ -124,6 +124,8 @@ pub mod schema {
             organization_id ->Nullable<Varchar>,
             #[max_length = 25000]
             description ->Nullable<Varchar>,
+            #[max_length = 1000]
+            dependencies_json ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -256,6 +258,7 @@ pub struct Package {
     pub created_at:Option<DateTime<Utc>>,
     pub organization_id:Option<String>,
     pub description:Option<String>,
+    pub dependencies_json:Option<String>,
     pub id:i64,
     
 }
@@ -356,5 +359,6 @@ pub struct PackageInsertable {
     pub created_at:Option<DateTime<Utc>>,
     pub organization_id:Option<String>,
     pub description:Option<String>,
+    pub dependencies_json:Option<String>,
     
 }

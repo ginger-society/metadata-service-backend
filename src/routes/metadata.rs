@@ -900,6 +900,7 @@ pub struct CreateOrUpdatePackageRequest {
     pub version: String,
     pub description: String,
     pub organization_id: String,
+    pub dependencies: Vec<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -946,6 +947,9 @@ pub async fn create_or_update_package(
                 lang.eq(&package_request.lang),
                 version.eq(&package_request.version),
                 updated_at.eq(Utc::now()),
+                dependencies_json.eq(Some(
+                    serde_json::to_string(&package_request.dependencies).unwrap(),
+                )),
             ))
             .execute(&mut conn)
             .map_err(|_| {
@@ -983,6 +987,7 @@ pub async fn create_or_update_package(
             group_id: Some(group_response.identifier), // Use the group_id from IAM service response
             description: Some(package_request.description.clone()),
             organization_id: Some(package_request.organization_id.clone()),
+            dependencies_json: Some(serde_json::to_string(&package_request.dependencies).unwrap()),
         };
 
         diesel::insert_into(package)
