@@ -1065,7 +1065,8 @@ pub async fn get_user_packages(
             updated_at: p.updated_at,
             description: p.description.unwrap_or(String::from("")),
             organization_id: p.organization_id.unwrap_or(String::from("")),
-            dependencies: serde_json::from_str(&p.dependencies_json.unwrap()).unwrap(),
+            dependencies: serde_json::from_str(&p.dependencies_json.unwrap_or(String::from("[]")))
+                .unwrap(),
         })
         .collect();
 
