@@ -950,6 +950,7 @@ pub async fn create_or_update_package(
                 dependencies_json.eq(Some(
                     serde_json::to_string(&package_request.dependencies).unwrap(),
                 )),
+                description.eq(&package_request.description),
             ))
             .execute(&mut conn)
             .map_err(|_| {
