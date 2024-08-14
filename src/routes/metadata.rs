@@ -1019,6 +1019,7 @@ pub struct PackageResponse {
     pub updated_at: DateTime<Utc>,
     pub description: String,
     pub organization_id: String,
+    pub dependencies: Vec<String>,
 }
 
 #[openapi()]
@@ -1063,6 +1064,7 @@ pub async fn get_user_packages(
             updated_at: p.updated_at,
             description: p.description.unwrap_or(String::from("")),
             organization_id: p.organization_id.unwrap_or(String::from("")),
+            dependencies: serde_json::from_str(&p.dependencies_json.unwrap()).unwrap(),
         })
         .collect();
 
