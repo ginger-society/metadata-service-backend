@@ -141,7 +141,7 @@ pub async fn create_dbschema(
             // Insert new branch with name "main"
             let new_branch = Dbschema_BranchInsertable {
                 data: None,
-                branch_name: "main".to_string(),
+                branch_name: "stage".to_string(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
                 parent_id: created_dbschema.id,
@@ -1101,7 +1101,7 @@ pub fn get_dbschemas_and_tables(
         .map(|db_schema_| {
             // Attempt to get the main branch data
             let main_branch = dbschema_branch
-                .filter(parent_id.eq(db_schema_.id).and(branch_name.eq("main")))
+                .filter(parent_id.eq(db_schema_.id).and(branch_name.eq("stage")))
                 .first::<Dbschema_Branch>(&mut conn)
                 .ok();
 
