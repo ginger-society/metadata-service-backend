@@ -6,13 +6,16 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . .
 
+# Set executable permissions for the build script
+RUN chmod +x /app/build.sh
+
 ARG GINGER_TOKEN
 ENV GINGER_TOKEN=$GINGER_TOKEN
 
 RUN ginger-connector connect stage-k8
 
-# Build the application in release mode
-RUN cargo build --release
+# Execute the build script
+RUN /app/build.sh
 
 # Second stage: Create the minimal runtime image
 FROM gingersociety/rust-rocket-api-runner:latest
