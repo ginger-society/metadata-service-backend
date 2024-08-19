@@ -46,6 +46,7 @@ pub mod schema {
             updated_at ->Timestamptz,
             #[max_length = 50]
             version ->Nullable<Varchar>,
+            pipeline_status ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -101,6 +102,7 @@ pub mod schema {
             updated_at ->Nullable<Timestamptz>,
             #[max_length = 30]
             version ->Varchar,
+            pipeline_status ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -134,6 +136,7 @@ pub mod schema {
             version ->Varchar,
             env ->Varchar,
             parent_id ->BigInt,
+            pipeline_status ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -200,6 +203,7 @@ pub struct Dbschema_Branch {
     pub created_at:DateTime<Utc>,
     pub updated_at:DateTime<Utc>,
     pub version:Option<String>,
+    pub pipeline_status:Option<String>,
     pub id:i64,
     
 }
@@ -249,6 +253,7 @@ pub struct Service_Envs {
     pub base_url:String,
     pub updated_at:Option<DateTime<Utc>>,
     pub version:String,
+    pub pipeline_status:Option<String>,
     pub id:i64,
     
 }
@@ -281,6 +286,7 @@ pub struct Package_Env {
     pub version:String,
     pub env:String,
     pub parent_id:i64,
+    pub pipeline_status:Option<String>,
     pub id:i64,
     
 }
@@ -316,6 +322,7 @@ pub struct Dbschema_BranchInsertable {
     pub created_at:DateTime<Utc>,
     pub updated_at:DateTime<Utc>,
     pub version:Option<String>,
+    pub pipeline_status:Option<String>,
     
 }
 
@@ -362,6 +369,7 @@ pub struct Service_EnvsInsertable {
     pub base_url:String,
     pub updated_at:Option<DateTime<Utc>>,
     pub version:String,
+    pub pipeline_status:Option<String>,
     
 }
 
@@ -392,5 +400,6 @@ pub struct Package_EnvInsertable {
     pub version:String,
     pub env:String,
     pub parent_id:i64,
+    pub pipeline_status:Option<String>,
     
 }

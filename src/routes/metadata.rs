@@ -147,6 +147,7 @@ pub async fn create_dbschema(
                 updated_at: Utc::now(),
                 parent_id: created_dbschema.id,
                 version: Some("0.0.0".to_string()),
+                pipeline_status: None,
             };
 
             diesel::insert_into(dbschema_branch)
@@ -376,6 +377,7 @@ pub fn create_dbschema_branch(
         created_at: Utc::now(),
         updated_at: Utc::now(),
         version: None,
+        pipeline_status: None,
     };
 
     let inserted_branch: Dbschema_Branch = diesel::insert_into(dbschema_branch)
@@ -661,6 +663,7 @@ pub async fn update_or_create_service(
             spec: service_request.spec.clone(),
             updated_at: Some(Utc::now()),
             version: service_request.version.clone().expect("Version is missing"),
+            pipeline_status: None,
         };
 
         diesel::insert_into(service_env_dsl::service_envs)
@@ -1033,6 +1036,7 @@ pub async fn create_or_update_package(
             parent_id: package_id,
             env: package_request.env.clone(),
             version: package_request.version.clone(),
+            pipeline_status: None,
         };
 
         diesel::insert_into(package_env_dsl::package_env)
@@ -1194,4 +1198,122 @@ pub fn get_dbschemas_and_tables(
         .collect();
 
     Ok(Json(response))
+}
+
+#[derive(Deserialize, JsonSchema)]
+pub struct PipelineStatusUpdateRequest {
+    pub env: String,
+    pub status: String,      // can be running, failed, passing, dormant
+    pub update_type: String, // can be schema, package, service
+    pub org_id: String,      // organization ID to filter
+    pub identifier: String,  // identifier to filter
+}
+#[openapi]
+#[put("/update-pipeline-status", format = "json", data = "<status_update>")]
+pub async fn update_pipeline_status(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    status_update: Json<PipelineStatusUpdateRequest>,
+) -> Result<status::NoContent, status::Custom<String>> {
+    use crate::models::schema::schema::dbschema::dsl as dbschema_dsl;
+    use crate::models::schema::schema::dbschema_branch::dsl as dbschema_branch_dsl;
+    use crate::models::schema::schema::package::dsl as package_dsl;
+    use crate::models::schema::schema::package_env::dsl as package_env_dsl;
+    use crate::models::schema::schema::service::dsl as service_dsl;
+    use crate::models::schema::schema::service_envs::dsl as service_envs_dsl;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let update_type = status_update.update_type.to_lowercase();
+    let env = status_update.env.to_lowercase();
+    let status = status_update.status.to_lowercase();
+    let org_id = status_update.org_id.to_lowercase();
+    let identifier = status_update.identifier.to_lowercase();
+
+    match update_type.as_str() {
+        "schema" => {
+            // Retrieve the parent ID from the dbschema table
+            let parent_id = dbschema_dsl::dbschema
+                .filter(dbschema_dsl::identifier.eq(&identifier))
+                .filter(dbschema_dsl::organization_id.eq(&org_id))
+                .select(dbschema_dsl::id)
+                .first::<i64>(&mut conn)
+                .map_err(|_| status::Custom(Status::NotFound, "Schema not found".to_string()))?;
+
+            // Update the pipeline status in the dbschema_branch table
+            diesel::update(
+                dbschema_branch_dsl::dbschema_branch
+                    .filter(dbschema_branch_dsl::parent_id.eq(parent_id))
+                    .filter(dbschema_branch_dsl::branch_name.eq(&env)),
+            )
+            .set(dbschema_branch_dsl::pipeline_status.eq(status))
+            .execute(&mut conn)
+            .map_err(|_| {
+                status::Custom(
+                    Status::InternalServerError,
+                    "Failed to update schema pipeline status".to_string(),
+                )
+            })?;
+        }
+        "package" => {
+            // Retrieve the parent ID from the package table
+            let parent_id = package_dsl::package
+                .filter(package_dsl::identifier.eq(&identifier))
+                .filter(package_dsl::organization_id.eq(&org_id))
+                .select(package_dsl::id)
+                .first::<i64>(&mut conn)
+                .map_err(|_| status::Custom(Status::NotFound, "Package not found".to_string()))?;
+
+            // Update the pipeline status in the package_env table
+            diesel::update(
+                package_env_dsl::package_env
+                    .filter(package_env_dsl::parent_id.eq(parent_id))
+                    .filter(package_env_dsl::env.eq(&env)),
+            )
+            .set(package_env_dsl::pipeline_status.eq(status))
+            .execute(&mut conn)
+            .map_err(|_| {
+                status::Custom(
+                    Status::InternalServerError,
+                    "Failed to update package pipeline status".to_string(),
+                )
+            })?;
+        }
+        "service" => {
+            // Retrieve the parent ID from the service table
+            let parent_id = service_dsl::service
+                .filter(service_dsl::identifier.eq(&identifier))
+                .filter(service_dsl::organization_id.eq(&org_id))
+                .select(service_dsl::id)
+                .first::<i64>(&mut conn)
+                .map_err(|_| status::Custom(Status::NotFound, "Service not found".to_string()))?;
+
+            // Update the pipeline status in the service_envs table
+            diesel::update(
+                service_envs_dsl::service_envs
+                    .filter(service_envs_dsl::parent_id.eq(parent_id))
+                    .filter(service_envs_dsl::env.eq(&env)),
+            )
+            .set(service_envs_dsl::pipeline_status.eq(status))
+            .execute(&mut conn)
+            .map_err(|_| {
+                status::Custom(
+                    Status::InternalServerError,
+                    "Failed to update service pipeline status".to_string(),
+                )
+            })?;
+        }
+        _ => {
+            return Err(status::Custom(
+                Status::BadRequest,
+                "Invalid update_type provided".to_string(),
+            ));
+        }
+    }
+
+    Ok(status::NoContent)
 }
