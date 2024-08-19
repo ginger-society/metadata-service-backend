@@ -4,7 +4,8 @@ use crate::middlewares::IAMService_config::IAMService_config;
 use crate::models::schema::schema::dbschema::organization_id;
 use crate::models::schema::{
     Dbschema, DbschemaInsertable, Dbschema_Branch, Dbschema_BranchInsertable, Package,
-    PackageInsertable, Service, ServiceInsertable, Service_Envs, Service_EnvsInsertable,
+    PackageInsertable, Package_Env, Package_EnvInsertable, Service, ServiceInsertable,
+    Service_Envs, Service_EnvsInsertable,
 };
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
@@ -895,6 +896,7 @@ pub struct CreateOrUpdatePackageRequest {
     pub description: String,
     pub organization_id: String,
     pub dependencies: Vec<String>,
+    pub env: String,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -912,6 +914,7 @@ pub async fn create_or_update_package(
     _claims: Claims,
 ) -> Result<status::Created<Json<CreateOrUpdatePackageResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::package::dsl::*;
+    use crate::models::schema::schema::package_env::dsl as package_env_dsl;
 
     let mut conn = rdb.get().map_err(|_| {
         status::Custom(
@@ -939,7 +942,7 @@ pub async fn create_or_update_package(
             .set((
                 package_type.eq(&package_request.package_type),
                 lang.eq(&package_request.lang),
-                version.eq(&package_request.version),
+                // version.eq(&package_request.version),
                 updated_at.eq(Utc::now()),
                 dependencies_json.eq(Some(
                     serde_json::to_string(&package_request.dependencies).unwrap(),
@@ -976,7 +979,6 @@ pub async fn create_or_update_package(
             identifier: package_identifier.clone(),
             package_type: package_request.package_type.clone(),
             lang: package_request.lang.clone(),
-            version: package_request.version.clone(),
             created_at: Some(Utc::now()),
             updated_at: Utc::now(),
             group_id: Some(group_response.identifier), // Use the group_id from IAM service response
@@ -996,6 +998,53 @@ pub async fn create_or_update_package(
                 )
             })?
     };
+
+    // Update or create the environment in the Package_Env table
+    let existing_env = package_env_dsl::package_env
+        .filter(package_env_dsl::parent_id.eq(package_id))
+        .filter(package_env_dsl::env.eq(&package_request.env))
+        .first::<Package_Env>(&mut conn)
+        .optional()
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving package environment".to_string(),
+            )
+        })?;
+
+    if let Some(_) = existing_env {
+        // Update the existing environment
+        diesel::update(
+            package_env_dsl::package_env
+                .filter(package_env_dsl::parent_id.eq(package_id))
+                .filter(package_env_dsl::env.eq(&package_request.env)),
+        )
+        .set(package_env_dsl::version.eq(&package_request.version))
+        .execute(&mut conn)
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error updating package environment".to_string(),
+            )
+        })?;
+    } else {
+        // Create a new environment
+        let new_env = Package_EnvInsertable {
+            parent_id: package_id,
+            env: package_request.env.clone(),
+            version: package_request.version.clone(),
+        };
+
+        diesel::insert_into(package_env_dsl::package_env)
+            .values(&new_env)
+            .execute(&mut conn)
+            .map_err(|_| {
+                status::Custom(
+                    Status::InternalServerError,
+                    "Error creating package environment".to_string(),
+                )
+            })?;
+    }
 
     let response = CreateOrUpdatePackageResponse {
         message: "Package created or updated successfully".to_string(),
@@ -1018,13 +1067,15 @@ pub struct PackageResponse {
 }
 
 #[openapi()]
-#[get("/packages")]
+#[get("/packages/<env>")]
 pub async fn get_user_packages(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     _claims: Claims,
+    env: String,
     groups: GroupMemberships,
 ) -> Result<Json<Vec<PackageResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::package::dsl::*;
+    use crate::models::schema::schema::package_env::dsl as package_env_dsl;
 
     let mut conn = rdb.get().map_err(|_| {
         status::Custom(
@@ -1039,9 +1090,12 @@ pub async fn get_user_packages(
     let memberships: Vec<String> = groups.0;
 
     // Get all packages associated with those group_ids
-    let packages: Vec<Package> = package
+    let results = package
+        .inner_join(package_env_dsl::package_env.on(package_env_dsl::parent_id.eq(id)))
         .filter(group_id.eq_any(memberships))
-        .load::<Package>(&mut conn)
+        .filter(package_env_dsl::env.eq(env))
+        .select((package::all_columns(), package_env_dsl::version))
+        .load::<(Package, String)>(&mut conn)
         .map_err(|_| {
             status::Custom(
                 Status::InternalServerError,
@@ -1049,18 +1103,18 @@ pub async fn get_user_packages(
             )
         })?;
 
-    let package_responses: Vec<PackageResponse> = packages
+    let package_responses: Vec<PackageResponse> = results
         .into_iter()
-        .map(|p| PackageResponse {
+        .map(|(p, version)| PackageResponse {
             identifier: p.identifier,
             package_type: p.package_type,
             lang: p.lang,
-            version: p.version,
             updated_at: p.updated_at,
             description: p.description.unwrap_or(String::from("")),
             organization_id: p.organization_id.unwrap_or(String::from("")),
             dependencies: serde_json::from_str(&p.dependencies_json.unwrap_or(String::from("[]")))
                 .unwrap(),
+            version, // Include the version from the package_env table
         })
         .collect();
 

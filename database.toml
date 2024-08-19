@@ -1,10 +1,10 @@
 [schema]
-branch = "stage"
+url = "http://localhost:8001"
 lang = "Rust"
 orm = "Diesel"
 root = "src/models"
 schema_id = "66bbad42-200f-4b2f-ba0d-9feb1f3edbfa"
-url = "http://localhost:8001"
+branch = "stage"
 
 [tables]
-names = ["dbschema", "dbschema_branch", "templates", "service", "service_envs", "package"]
+names = ["dbschema", "dbschema_branch", "templates", "service", "service_envs", "package", "package_env"]
