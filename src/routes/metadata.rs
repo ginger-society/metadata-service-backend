@@ -1228,11 +1228,11 @@ pub async fn update_pipeline_status(
         )
     })?;
 
-    let update_type = status_update.update_type.to_lowercase();
-    let env = status_update.env.to_lowercase();
-    let status = status_update.status.to_lowercase();
-    let org_id = status_update.org_id.to_lowercase();
-    let identifier = status_update.identifier.to_lowercase();
+    let update_type = status_update.update_type.clone();
+    let env = status_update.env.clone();
+    let status = status_update.status.clone();
+    let org_id = status_update.org_id.clone();
+    let identifier = status_update.identifier.clone();
 
     match update_type.as_str() {
         "schema" => {
@@ -1290,7 +1290,10 @@ pub async fn update_pipeline_status(
                 .filter(service_dsl::organization_id.eq(&org_id))
                 .select(service_dsl::id)
                 .first::<i64>(&mut conn)
-                .map_err(|_| status::Custom(Status::NotFound, "Service not found".to_string()))?;
+                .map_err(|e| {
+                    println!("{:?}", e);
+                    status::Custom(Status::NotFound, "Service not found".to_string())
+                })?;
 
             // Update the pipeline status in the service_envs table
             diesel::update(
