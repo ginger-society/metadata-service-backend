@@ -40,7 +40,6 @@ pub struct GetDbschemaResponse {
     pub id: i64,
     pub name: String,
     pub description: Option<String>,
-    pub version: String,
     pub updated_at: chrono::DateTime<Utc>,
     pub identifier: Option<String>,
     pub organization_id: String,
@@ -51,7 +50,7 @@ pub struct GetDbschemaAndTablesResponse {
     pub id: i64,
     pub name: String,
     pub description: Option<String>,
-    pub version: String,
+    pub version: Option<String>,
     pub updated_at: chrono::DateTime<Utc>,
     pub identifier: Option<String>,
     pub organization_id: String,
@@ -63,10 +62,9 @@ pub struct GetDbschemaByIdResponse {
     pub id: i64,
     pub name: String,
     pub description: Option<String>,
-    pub version: String,
+    pub version: Option<String>,
     pub updated_at: chrono::DateTime<Utc>,
     pub data: Option<String>,
-    pub merged: bool,
     pub branch_id: Option<i64>,
 }
 
@@ -122,7 +120,6 @@ pub async fn create_dbschema(
             let new_dbschema = DbschemaInsertable {
                 name: create_request.name.clone(),
                 description: create_request.description.clone(),
-                version: "0.0.0".to_string(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
                 data: create_request.data.clone(),
@@ -148,7 +145,7 @@ pub async fn create_dbschema(
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
                 parent_id: created_dbschema.id,
-                merged: false,
+                version: Some("0.0.0".to_string()),
             };
 
             diesel::insert_into(dbschema_branch)
@@ -218,7 +215,6 @@ pub fn get_dbschemas(
             id: db_schema_.id,
             name: db_schema_.name,
             description: db_schema_.description,
-            version: db_schema_.version,
             updated_at: db_schema_.updated_at,
             identifier: db_schema_.identifier,
             organization_id: db_schema_.organization_id.unwrap(),
@@ -310,11 +306,10 @@ pub fn get_dbschema_by_id(
         id: result_dbschema.id,
         name: result_dbschema.name.clone(),
         description: result_dbschema.description.clone(),
-        version: result_dbschema.version.clone(),
         updated_at: result_dbschema.updated_at,
         data: None,
-        merged: false,
         branch_id: None,
+        version: None,
     };
 
     if let Some(branch) = branch {
@@ -335,8 +330,8 @@ pub fn get_dbschema_by_id(
                 )
             })?;
 
+        response.version = result_branch.version.clone();
         response.data = result_branch.data;
-        response.merged = result_branch.merged;
         response.branch_id = Some(result_branch.id);
     }
 
@@ -379,7 +374,7 @@ pub fn create_dbschema_branch(
         data: branch_request.data.clone(),
         created_at: Utc::now(),
         updated_at: Utc::now(),
-        merged: false,
+        version: None,
     };
 
     let inserted_branch: Dbschema_Branch = diesel::insert_into(dbschema_branch)
@@ -469,7 +464,6 @@ pub fn update_dbschema_branch(
             .set((
                 branch_dsl::branch_name.eq(branch_request.branch_name.clone()),
                 branch_dsl::data.eq(branch_request.data.clone()),
-                branch_dsl::merged.eq(branch_request.merged.unwrap_or(false)),
                 branch_dsl::updated_at.eq(Utc::now()),
             ))
             .execute(&mut conn)
@@ -1106,11 +1100,12 @@ pub fn get_dbschemas_and_tables(
         .into_iter()
         .map(|db_schema_| {
             // Attempt to get the main branch data
-            let main_branch_data = dbschema_branch
+            let main_branch = dbschema_branch
                 .filter(parent_id.eq(db_schema_.id).and(branch_name.eq("main")))
                 .first::<Dbschema_Branch>(&mut conn)
-                .ok()
-                .and_then(|main_branch| main_branch.data);
+                .ok();
+
+            let main_branch_data = main_branch.clone().unwrap().data;
 
             // Use the main branch data if available, otherwise fallback to the db_schema_ data
             let data_to_use = main_branch_data.as_deref().or(db_schema_.data.as_deref());
@@ -1135,7 +1130,7 @@ pub fn get_dbschemas_and_tables(
                 id: db_schema_.id,
                 name: db_schema_.name,
                 description: db_schema_.description,
-                version: db_schema_.version,
+                version: main_branch.unwrap().version,
                 updated_at: db_schema_.updated_at,
                 identifier: db_schema_.identifier,
                 organization_id: db_schema_.organization_id.unwrap(),

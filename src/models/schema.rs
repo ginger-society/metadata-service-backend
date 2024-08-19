@@ -1,15 +1,15 @@
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
-use diesel::Insertable;
-use chrono::NaiveDate;
-use diesel::{deserialize::Queryable, Selectable};
-use schemars::JsonSchema;
-use serde::Serialize;
 use chrono::offset::Utc;
 use chrono::DateTime;
-use diesel::Identifiable;
+use chrono::NaiveDate;
 use diesel::Associations;
+use diesel::Identifiable;
+use diesel::Insertable;
+use diesel::{deserialize::Queryable, Selectable};
 use rocket::serde::Deserialize;
+use schemars::JsonSchema;
+use serde::Serialize;
 
 pub mod schema {
     use diesel::table;
@@ -20,8 +20,6 @@ pub mod schema {
             name ->Varchar,
             #[max_length = 500]
             description ->Nullable<Varchar>,
-            #[max_length = 10]
-            version ->Varchar,
             created_at ->Timestamptz,
             updated_at ->Timestamptz,
             #[max_length = 10000]
@@ -33,10 +31,10 @@ pub mod schema {
             #[max_length = 100]
             organization_id ->Nullable<Varchar>,
             id ->BigInt,
-            
+
         }
     }
-    
+
     table! {
         dbschema_branch (id) {
             parent_id ->BigInt,
@@ -46,12 +44,13 @@ pub mod schema {
             data ->Nullable<Varchar>,
             created_at ->Timestamptz,
             updated_at ->Timestamptz,
-            merged ->Bool,
+            #[max_length = 50]
+            version ->Nullable<Varchar>,
             id ->BigInt,
-            
+
         }
     }
-    
+
     table! {
         templates (id) {
             #[max_length = 100]
@@ -63,10 +62,10 @@ pub mod schema {
             #[max_length = 40]
             identifier ->Varchar,
             id ->BigInt,
-            
+
         }
     }
-    
+
     table! {
         service (id) {
             #[max_length = 50]
@@ -87,10 +86,10 @@ pub mod schema {
             #[max_length = 100]
             organization_id ->Nullable<Varchar>,
             id ->BigInt,
-            
+
         }
     }
-    
+
     table! {
         service_envs (id) {
             parent_id ->BigInt,
@@ -103,10 +102,10 @@ pub mod schema {
             #[max_length = 30]
             version ->Varchar,
             id ->BigInt,
-            
+
         }
     }
-    
+
     table! {
         package (id) {
             #[max_length = 100]
@@ -127,23 +126,13 @@ pub mod schema {
             #[max_length = 1000]
             dependencies_json ->Nullable<Varchar>,
             id ->BigInt,
-            
+
         }
     }
-    
-    
-        
-    
-        diesel::joinable!(dbschema_branch -> dbschema (parent_id));
-    
-        
-    
-        
-    
-        diesel::joinable!(service_envs -> service (parent_id));
-    
-        
-    
+
+    diesel::joinable!(dbschema_branch -> dbschema (parent_id));
+
+    diesel::joinable!(service_envs -> service (parent_id));
 
     diesel::allow_tables_to_appear_in_same_query!(
         dbschema,
@@ -152,213 +141,191 @@ pub mod schema {
         service,
         service_envs,
         package,
-        
     );
 }
 
-use schema::{ dbschema,dbschema_branch,templates,service,service_envs,package, };
+use schema::{dbschema, dbschema_branch, package, service, service_envs, templates};
 
-
-
-#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema,Identifiable)]
-
+#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema, Identifiable)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = dbschema)]
 pub struct Dbschema {
-    pub name:String,
-    pub description:Option<String>,
-    pub version:String,
-    pub created_at:DateTime<Utc>,
-    pub updated_at:DateTime<Utc>,
-    pub data:Option<String>,
-    pub group_id:String,
-    pub identifier:Option<String>,
-    pub organization_id:Option<String>,
-    pub id:i64,
-    
+    pub name: String,
+    pub description: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub data: Option<String>,
+    pub group_id: String,
+    pub identifier: Option<String>,
+    pub organization_id: Option<String>,
+    pub id: i64,
 }
 
-
-#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema,Identifiable,Associations)]
+#[derive(
+    Queryable,
+    Debug,
+    Selectable,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    Identifiable,
+    Associations,
+    Clone,
+)]
 #[diesel(belongs_to(Dbschema, foreign_key = parent_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = dbschema_branch)]
 pub struct Dbschema_Branch {
-    pub parent_id:i64,
-    pub branch_name:String,
-    pub data:Option<String>,
-    pub created_at:DateTime<Utc>,
-    pub updated_at:DateTime<Utc>,
-    pub merged:bool,
-    pub id:i64,
-    
+    pub parent_id: i64,
+    pub branch_name: String,
+    pub data: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub version: Option<String>,
+    pub id: i64,
 }
 
-
-#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema,Identifiable)]
-
+#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema, Identifiable)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = templates)]
 pub struct Templates {
-    pub short_name:String,
-    pub description:String,
-    pub repo_link:String,
-    pub identifier:String,
-    pub id:i64,
-    
+    pub short_name: String,
+    pub description: String,
+    pub repo_link: String,
+    pub identifier: String,
+    pub id: i64,
 }
 
-
-#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema,Identifiable)]
-
+#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema, Identifiable)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = service)]
 pub struct Service {
-    pub identifier:String,
-    pub group_id:String,
-    pub db_schema_id:Option<String>,
-    pub tables_json:Option<String>,
-    pub dependencies_json:Option<String>,
-    pub service_type:String,
-    pub lang:Option<String>,
-    pub description:Option<String>,
-    pub organization_id:Option<String>,
-    pub id:i64,
-    
+    pub identifier: String,
+    pub group_id: String,
+    pub db_schema_id: Option<String>,
+    pub tables_json: Option<String>,
+    pub dependencies_json: Option<String>,
+    pub service_type: String,
+    pub lang: Option<String>,
+    pub description: Option<String>,
+    pub organization_id: Option<String>,
+    pub id: i64,
 }
 
-
-#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema,Identifiable,Associations)]
+#[derive(
+    Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema, Identifiable, Associations,
+)]
 #[diesel(belongs_to(Service, foreign_key = parent_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = service_envs)]
 pub struct Service_Envs {
-    pub parent_id:i64,
-    pub spec:String,
-    pub env:String,
-    pub base_url:String,
-    pub updated_at:Option<DateTime<Utc>>,
-    pub version:String,
-    pub id:i64,
-    
+    pub parent_id: i64,
+    pub spec: String,
+    pub env: String,
+    pub base_url: String,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub version: String,
+    pub id: i64,
 }
 
-
-#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema,Identifiable)]
-
+#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, JsonSchema, Identifiable)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = package)]
 pub struct Package {
-    pub identifier:String,
-    pub package_type:String,
-    pub lang:String,
-    pub version:String,
-    pub group_id:Option<String>,
-    pub updated_at:DateTime<Utc>,
-    pub created_at:Option<DateTime<Utc>>,
-    pub organization_id:Option<String>,
-    pub description:Option<String>,
-    pub dependencies_json:Option<String>,
-    pub id:i64,
-    
+    pub identifier: String,
+    pub package_type: String,
+    pub lang: String,
+    pub version: String,
+    pub group_id: Option<String>,
+    pub updated_at: DateTime<Utc>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub organization_id: Option<String>,
+    pub description: Option<String>,
+    pub dependencies_json: Option<String>,
+    pub id: i64,
 }
 
-
-
-
 #[derive(Queryable, Debug, Selectable, Serialize, Deserialize, Insertable, JsonSchema)]
-
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = dbschema)]
 pub struct DbschemaInsertable {
-    pub name:String,
-    pub description:Option<String>,
-    pub version:String,
-    pub created_at:DateTime<Utc>,
-    pub updated_at:DateTime<Utc>,
-    pub data:Option<String>,
-    pub group_id:String,
-    pub identifier:Option<String>,
-    pub organization_id:Option<String>,
-    
+    pub name: String,
+    pub description: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub data: Option<String>,
+    pub group_id: String,
+    pub identifier: Option<String>,
+    pub organization_id: Option<String>,
 }
 
-
-#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, Insertable, JsonSchema,Associations)]
+#[derive(
+    Queryable, Debug, Selectable, Serialize, Deserialize, Insertable, JsonSchema, Associations,
+)]
 #[diesel(belongs_to(Dbschema, foreign_key = parent_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = dbschema_branch)]
 pub struct Dbschema_BranchInsertable {
-    pub parent_id:i64,
-    pub branch_name:String,
-    pub data:Option<String>,
-    pub created_at:DateTime<Utc>,
-    pub updated_at:DateTime<Utc>,
-    pub merged:bool,
-    
+    pub parent_id: i64,
+    pub branch_name: String,
+    pub data: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub version: Option<String>,
 }
 
-
 #[derive(Queryable, Debug, Selectable, Serialize, Deserialize, Insertable, JsonSchema)]
-
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = templates)]
 pub struct TemplatesInsertable {
-    pub short_name:String,
-    pub description:String,
-    pub repo_link:String,
-    pub identifier:String,
-    
+    pub short_name: String,
+    pub description: String,
+    pub repo_link: String,
+    pub identifier: String,
 }
 
-
 #[derive(Queryable, Debug, Selectable, Serialize, Deserialize, Insertable, JsonSchema)]
-
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = service)]
 pub struct ServiceInsertable {
-    pub identifier:String,
-    pub group_id:String,
-    pub db_schema_id:Option<String>,
-    pub tables_json:Option<String>,
-    pub dependencies_json:Option<String>,
-    pub service_type:String,
-    pub lang:Option<String>,
-    pub description:Option<String>,
-    pub organization_id:Option<String>,
-    
+    pub identifier: String,
+    pub group_id: String,
+    pub db_schema_id: Option<String>,
+    pub tables_json: Option<String>,
+    pub dependencies_json: Option<String>,
+    pub service_type: String,
+    pub lang: Option<String>,
+    pub description: Option<String>,
+    pub organization_id: Option<String>,
 }
 
-
-#[derive(Queryable, Debug, Selectable, Serialize, Deserialize, Insertable, JsonSchema,Associations)]
+#[derive(
+    Queryable, Debug, Selectable, Serialize, Deserialize, Insertable, JsonSchema, Associations,
+)]
 #[diesel(belongs_to(Service, foreign_key = parent_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = service_envs)]
 pub struct Service_EnvsInsertable {
-    pub parent_id:i64,
-    pub spec:String,
-    pub env:String,
-    pub base_url:String,
-    pub updated_at:Option<DateTime<Utc>>,
-    pub version:String,
-    
+    pub parent_id: i64,
+    pub spec: String,
+    pub env: String,
+    pub base_url: String,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub version: String,
 }
 
-
 #[derive(Queryable, Debug, Selectable, Serialize, Deserialize, Insertable, JsonSchema)]
-
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(table_name = package)]
 pub struct PackageInsertable {
-    pub identifier:String,
-    pub package_type:String,
-    pub lang:String,
-    pub version:String,
-    pub group_id:Option<String>,
-    pub updated_at:DateTime<Utc>,
-    pub created_at:Option<DateTime<Utc>>,
-    pub organization_id:Option<String>,
-    pub description:Option<String>,
-    pub dependencies_json:Option<String>,
-    
+    pub identifier: String,
+    pub package_type: String,
+    pub lang: String,
+    pub version: String,
+    pub group_id: Option<String>,
+    pub updated_at: DateTime<Utc>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub organization_id: Option<String>,
+    pub description: Option<String>,
+    pub dependencies_json: Option<String>,
 }

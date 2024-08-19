@@ -3,7 +3,7 @@ url = "http://localhost:8001"
 lang = "Rust"
 orm = "Diesel"
 root = "src/models"
-schema_id = "0571964c-0da3-4bf1-84d3-041797650ffc"
+schema_id = "66bbad42-200f-4b2f-ba0d-9feb1f3edbfa"
 branch = "main"
 
 [tables]
