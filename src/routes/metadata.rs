@@ -56,6 +56,7 @@ pub struct GetDbschemaAndTablesResponse {
     pub identifier: Option<String>,
     pub organization_id: String,
     pub tables: Vec<String>,
+    pub pipeline_status: Option<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -696,6 +697,7 @@ pub struct ServicesEnvTrimmedResponse {
     pub base_url: String,
     pub updated_at: Option<DateTime<Utc>>,
     pub version: Option<String>,
+    pub pipeline_status: Option<String>,
 }
 
 #[derive(Debug, Serialize, JsonSchema)]
@@ -764,6 +766,7 @@ pub fn get_services_and_envs(
                     base_url: e.base_url,
                     updated_at: e.updated_at,
                     version: Some(e.version),
+                    pipeline_status: e.pipeline_status,
                 })
                 .collect();
 
@@ -1068,6 +1071,7 @@ pub struct PackageResponse {
     pub description: String,
     pub organization_id: String,
     pub dependencies: Vec<String>,
+    pub pipeline_status: Option<String>,
 }
 
 #[openapi()]
@@ -1098,8 +1102,12 @@ pub async fn get_user_packages(
         .inner_join(package_env_dsl::package_env.on(package_env_dsl::parent_id.eq(id)))
         .filter(group_id.eq_any(memberships))
         .filter(package_env_dsl::env.eq(env))
-        .select((package::all_columns(), package_env_dsl::version))
-        .load::<(Package, String)>(&mut conn)
+        .select((
+            package::all_columns(),
+            package_env_dsl::version,
+            package_env_dsl::pipeline_status,
+        ))
+        .load::<(Package, String, Option<String>)>(&mut conn)
         .map_err(|_| {
             status::Custom(
                 Status::InternalServerError,
@@ -1109,7 +1117,7 @@ pub async fn get_user_packages(
 
     let package_responses: Vec<PackageResponse> = results
         .into_iter()
-        .map(|(p, version)| PackageResponse {
+        .map(|(p, version, pipeline_status)| PackageResponse {
             identifier: p.identifier,
             package_type: p.package_type,
             lang: p.lang,
@@ -1119,6 +1127,7 @@ pub async fn get_user_packages(
             dependencies: serde_json::from_str(&p.dependencies_json.unwrap_or(String::from("[]")))
                 .unwrap(),
             version, // Include the version from the package_env table
+            pipeline_status,
         })
         .collect();
 
@@ -1126,10 +1135,11 @@ pub async fn get_user_packages(
 }
 
 #[openapi()]
-#[get("/dbschemas-and-tables")]
+#[get("/dbschemas-and-tables/<env>")]
 pub fn get_dbschemas_and_tables(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     groups: GroupMemberships,
+    env: String,
     _claims: Claims,
 ) -> Result<Json<Vec<GetDbschemaAndTablesResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl::*;
@@ -1158,15 +1168,15 @@ pub fn get_dbschemas_and_tables(
         .into_iter()
         .map(|db_schema_| {
             // Attempt to get the main branch data
-            let main_branch = dbschema_branch
-                .filter(parent_id.eq(db_schema_.id).and(branch_name.eq("stage")))
+            let branch = dbschema_branch
+                .filter(parent_id.eq(db_schema_.id).and(branch_name.eq(env.clone())))
                 .first::<Dbschema_Branch>(&mut conn)
                 .ok();
 
-            let main_branch_data = main_branch.clone().unwrap().data;
+            let branch_data = branch.clone().unwrap().data;
 
             // Use the main branch data if available, otherwise fallback to the db_schema_ data
-            let data_to_use = main_branch_data.as_deref().or(db_schema_.data.as_deref());
+            let data_to_use = branch_data.as_deref().or(db_schema_.data.as_deref());
 
             let tables: Vec<String> = match data_to_use {
                 Some(data_str) => match serde_json::from_str::<Value>(data_str) {
@@ -1188,11 +1198,12 @@ pub fn get_dbschemas_and_tables(
                 id: db_schema_.id,
                 name: db_schema_.name,
                 description: db_schema_.description,
-                version: main_branch.unwrap().version,
+                version: branch.clone().unwrap().version,
                 updated_at: db_schema_.updated_at,
                 identifier: db_schema_.identifier,
                 organization_id: db_schema_.organization_id.unwrap(),
                 tables,
+                pipeline_status: branch.clone().unwrap().pipeline_status,
             }
         })
         .collect();
