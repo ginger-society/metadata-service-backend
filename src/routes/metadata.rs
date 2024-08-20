@@ -57,6 +57,7 @@ pub struct GetDbschemaAndTablesResponse {
     pub organization_id: String,
     pub tables: Vec<String>,
     pub pipeline_status: Option<String>,
+    pub repo_origin: Option<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -1214,6 +1215,7 @@ pub fn get_dbschemas_and_tables(
                 organization_id: db_schema_.organization_id.unwrap(),
                 tables,
                 pipeline_status: branch.clone().unwrap().pipeline_status,
+                repo_origin: db_schema_.repo_origin,
             }
         })
         .collect();
