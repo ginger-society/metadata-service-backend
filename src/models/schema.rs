@@ -30,6 +30,8 @@ pub mod schema {
             identifier ->Nullable<Varchar>,
             #[max_length = 100]
             organization_id ->Nullable<Varchar>,
+            #[max_length = 200]
+            repo_origin ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -86,6 +88,8 @@ pub mod schema {
             description ->Nullable<Varchar>,
             #[max_length = 100]
             organization_id ->Nullable<Varchar>,
+            #[max_length = 200]
+            repo_origin ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -125,6 +129,8 @@ pub mod schema {
             description ->Nullable<Varchar>,
             #[max_length = 1000]
             dependencies_json ->Nullable<Varchar>,
+            #[max_length = 200]
+            repo_origin ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -187,6 +193,7 @@ pub struct Dbschema {
     pub group_id:String,
     pub identifier:Option<String>,
     pub organization_id:Option<String>,
+    pub repo_origin:Option<String>,
     pub id:i64,
     
 }
@@ -237,6 +244,7 @@ pub struct Service {
     pub lang:Option<String>,
     pub description:Option<String>,
     pub organization_id:Option<String>,
+    pub repo_origin:Option<String>,
     pub id:i64,
     
 }
@@ -273,6 +281,7 @@ pub struct Package {
     pub organization_id:Option<String>,
     pub description:Option<String>,
     pub dependencies_json:Option<String>,
+    pub repo_origin:Option<String>,
     pub id:i64,
     
 }
@@ -307,6 +316,7 @@ pub struct DbschemaInsertable {
     pub group_id:String,
     pub identifier:Option<String>,
     pub organization_id:Option<String>,
+    pub repo_origin:Option<String>,
     
 }
 
@@ -354,6 +364,7 @@ pub struct ServiceInsertable {
     pub lang:Option<String>,
     pub description:Option<String>,
     pub organization_id:Option<String>,
+    pub repo_origin:Option<String>,
     
 }
 
@@ -388,6 +399,7 @@ pub struct PackageInsertable {
     pub organization_id:Option<String>,
     pub description:Option<String>,
     pub dependencies_json:Option<String>,
+    pub repo_origin:Option<String>,
     
 }
 
