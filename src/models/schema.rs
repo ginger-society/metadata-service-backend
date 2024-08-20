@@ -148,6 +148,20 @@ pub mod schema {
         }
     }
     
+    table! {
+        organization (id) {
+            #[max_length = 100]
+            slug ->Varchar,
+            #[max_length = 100]
+            group_id ->Varchar,
+            is_active ->Bool,
+            #[max_length = 40000]
+            blocks_positions ->Nullable<Varchar>,
+            id ->BigInt,
+            
+        }
+    }
+    
     
         
     
@@ -163,6 +177,8 @@ pub mod schema {
     
         diesel::joinable!(package_env -> package (parent_id));
     
+        
+    
 
     diesel::allow_tables_to_appear_in_same_query!(
         dbschema,
@@ -172,11 +188,12 @@ pub mod schema {
         service_envs,
         package,
         package_env,
+        organization,
         
     );
 }
 
-use schema::{ dbschema,dbschema_branch,templates,service,service_envs,package,package_env, };
+use schema::{ dbschema,dbschema_branch,templates,service,service_envs,package,package_env,organization, };
 
 
 
@@ -301,6 +318,20 @@ pub struct Package_Env {
 }
 
 
+#[derive(Queryable, Debug, Clone, Selectable, Serialize, Deserialize, JsonSchema,Identifiable)]
+
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(table_name = organization)]
+pub struct Organization {
+    pub slug:String,
+    pub group_id:String,
+    pub is_active:bool,
+    pub blocks_positions:Option<String>,
+    pub id:i64,
+    
+}
+
+
 
 
 #[derive(Queryable, Debug, Clone, Selectable, Serialize, Deserialize, Insertable, JsonSchema)]
@@ -413,5 +444,18 @@ pub struct Package_EnvInsertable {
     pub env:String,
     pub parent_id:i64,
     pub pipeline_status:Option<String>,
+    
+}
+
+
+#[derive(Queryable, Debug, Clone, Selectable, Serialize, Deserialize, Insertable, JsonSchema)]
+
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(table_name = organization)]
+pub struct OrganizationInsertable {
+    pub slug:String,
+    pub group_id:String,
+    pub is_active:bool,
+    pub blocks_positions:Option<String>,
     
 }

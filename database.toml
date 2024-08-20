@@ -7,4 +7,4 @@ schema_id = "66bbad42-200f-4b2f-ba0d-9feb1f3edbfa"
 branch = "stage"
 
 [tables]
-names = ["dbschema", "dbschema_branch", "templates", "service", "service_envs", "package", "package_env"]
+names = ["dbschema", "dbschema_branch", "templates", "service", "service_envs", "package", "package_env", "organization"]
