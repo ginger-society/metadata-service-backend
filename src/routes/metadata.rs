@@ -962,6 +962,7 @@ pub async fn create_or_update_package(
                     serde_json::to_string(&package_request.dependencies).unwrap(),
                 )),
                 description.eq(&package_request.description),
+                repo_origin.eq(&package_request.repo_origin),
             ))
             .execute(&mut conn)
             .map_err(|_| {
