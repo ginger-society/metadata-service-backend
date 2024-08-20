@@ -128,6 +128,7 @@ pub async fn create_dbschema(
                 group_id: response.identifier,
                 identifier: Some(dbschema_uuid),
                 organization_id: Some(create_request.organisation_id.clone()),
+                repo_origin: None,
             };
 
             let created_dbschema: Dbschema = diesel::insert_into(dbschema)
@@ -507,6 +508,7 @@ pub struct UpdateServiceRequest {
     pub lang: Option<String>,
     pub description: String,
     pub organization_id: String,
+    pub repo_origin: Option<String>,
 }
 
 #[derive(Debug, Serialize, JsonSchema)]
@@ -564,6 +566,7 @@ pub async fn update_or_create_service(
                 tables_json.eq(Some(
                     serde_json::to_string(&service_request.tables).unwrap(),
                 )),
+                repo_origin.eq(&service_request.repo_origin),
             ))
             .execute(&mut conn)
             .map_err(|_| {
@@ -604,6 +607,7 @@ pub async fn update_or_create_service(
             lang: service_request.lang.clone(),
             organization_id: Some(service_request.organization_id.clone()),
             description: Some(service_request.description.clone()),
+            repo_origin: service_request.repo_origin.clone(),
         };
 
         diesel::insert_into(service)
@@ -903,6 +907,7 @@ pub struct CreateOrUpdatePackageRequest {
     pub organization_id: String,
     pub dependencies: Vec<String>,
     pub env: String,
+    pub repo_origin: Option<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -991,6 +996,7 @@ pub async fn create_or_update_package(
             description: Some(package_request.description.clone()),
             organization_id: Some(package_request.organization_id.clone()),
             dependencies_json: Some(serde_json::to_string(&package_request.dependencies).unwrap()),
+            repo_origin: package_request.repo_origin.clone(),
         };
 
         diesel::insert_into(package)
