@@ -715,6 +715,7 @@ pub struct ServicesTrimmedResponse {
     pub lang: Option<String>,
     pub description: String,
     pub organization_id: String,
+    pub repo_origin: Option<String>,
 }
 
 #[openapi]
@@ -785,6 +786,7 @@ pub fn get_services_and_envs(
                 lang: s.lang,
                 organization_id: s.organization_id.unwrap_or(String::from("")),
                 description: s.description.unwrap_or(String::from("")),
+                repo_origin: s.repo_origin,
             })
         })
         .collect::<Result<Vec<ServicesTrimmedResponse>, rocket::http::Status>>()?;
@@ -1078,6 +1080,7 @@ pub struct PackageResponse {
     pub organization_id: String,
     pub dependencies: Vec<String>,
     pub pipeline_status: Option<String>,
+    pub repo_origin: Option<String>,
 }
 
 #[openapi()]
@@ -1134,6 +1137,7 @@ pub async fn get_user_packages(
                 .unwrap(),
             version, // Include the version from the package_env table
             pipeline_status,
+            repo_origin: p.repo_origin,
         })
         .collect();
 
