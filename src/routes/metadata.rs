@@ -1521,6 +1521,7 @@ pub struct WorkspaceSummary {
     slug: String,
     name: Option<String>,
     is_active: bool,
+    is_admin: bool,
 }
 
 #[openapi()]
@@ -1528,6 +1529,7 @@ pub struct WorkspaceSummary {
 pub async fn get_workspaces(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     groups_owned: GroupOwnerships,
+    groups: GroupMemberships,
 ) -> Result<Json<Vec<WorkspaceSummary>>, status::Custom<String>> {
     use crate::models::schema::schema::organization::dsl::*;
 
@@ -1538,9 +1540,13 @@ pub async fn get_workspaces(
         )
     })?;
 
+    let ownerships: Vec<String> = groups_owned.0;
+    let memberships: Vec<String> = groups.0;
+
     let workspaces: Vec<WorkspaceSummary> = organization
-        .select((slug, name, is_active))
-        .load::<(String, Option<String>, bool)>(&mut conn)
+        .filter(group_id.eq_any(memberships))
+        .select((slug, name, is_active, group_id))
+        .load::<(String, Option<String>, bool, String)>(&mut conn)
         .map_err(|_| {
             status::Custom(
                 Status::InternalServerError,
@@ -1548,10 +1554,11 @@ pub async fn get_workspaces(
             )
         })?
         .into_iter()
-        .map(|(_slug, _name, _is_active)| WorkspaceSummary {
+        .map(|(_slug, _name, _is_active, _group_id)| WorkspaceSummary {
             slug: _slug,
             name: _name,
             is_active: _is_active,
+            is_admin: ownerships.contains(&_group_id),
         })
         .collect();
 
@@ -1563,6 +1570,7 @@ pub struct WorkspaceDetail {
     name: Option<String>,
     block_positions: Option<String>,
     is_active: bool,
+    is_admin: bool,
 }
 
 #[openapi()]
@@ -1570,6 +1578,7 @@ pub struct WorkspaceDetail {
 pub async fn get_workspace(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     org_id: String,
+    groups_owned: GroupOwnerships,
 ) -> Result<Json<WorkspaceDetail>, status::Custom<String>> {
     use crate::models::schema::schema::organization::dsl::*;
 
@@ -1580,10 +1589,12 @@ pub async fn get_workspace(
         )
     })?;
 
+    let ownerships: Vec<String> = groups_owned.0;
+
     let workspace = organization
         .filter(slug.eq(org_id))
-        .select((name, blocks_positions, is_active))
-        .first::<(Option<String>, Option<String>, bool)>(&mut conn)
+        .select((name, blocks_positions, is_active, group_id))
+        .first::<(Option<String>, Option<String>, bool, String)>(&mut conn)
         .optional()
         .map_err(|_| {
             status::Custom(
@@ -1592,11 +1603,12 @@ pub async fn get_workspace(
             )
         })?;
 
-    if let Some((_name, _block_positions, _is_active)) = workspace {
+    if let Some((_name, _block_positions, _is_active, _group_id)) = workspace {
         Ok(Json(WorkspaceDetail {
             name: _name,
             block_positions: _block_positions,
             is_active: _is_active,
+            is_admin: ownerships.contains(&_group_id),
         }))
     } else {
         Err(status::Custom(
