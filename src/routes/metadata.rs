@@ -1,4 +1,6 @@
 use crate::middlewares::groups::GroupMemberships;
+use crate::middlewares::groups_owned;
+use crate::middlewares::groups_owned::GroupOwnerships;
 use crate::middlewares::jwt::Claims;
 use crate::middlewares::IAMService_config::IAMService_config;
 use crate::models::schema::schema::dbschema::organization_id;
@@ -21,7 +23,6 @@ use uuid::Uuid;
 use winnow::Parser;
 use IAMService::apis::default_api::{identity_create_group, IdentityCreateGroupParams};
 use IAMService::models::CreateGroupRequest;
-
 #[derive(Deserialize, Serialize, JsonSchema)]
 pub struct CreateDbschemaRequest {
     pub name: String,
@@ -1519,12 +1520,14 @@ pub async fn update_block_positions(
 pub struct WorkspaceSummary {
     slug: String,
     name: Option<String>,
+    is_active: bool,
 }
 
 #[openapi()]
 #[get("/get-workspaces")]
 pub async fn get_workspaces(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    groups_owned: GroupOwnerships,
 ) -> Result<Json<Vec<WorkspaceSummary>>, status::Custom<String>> {
     use crate::models::schema::schema::organization::dsl::*;
 
@@ -1536,8 +1539,8 @@ pub async fn get_workspaces(
     })?;
 
     let workspaces: Vec<WorkspaceSummary> = organization
-        .select((slug, name))
-        .load::<(String, Option<String>)>(&mut conn)
+        .select((slug, name, is_active))
+        .load::<(String, Option<String>, bool)>(&mut conn)
         .map_err(|_| {
             status::Custom(
                 Status::InternalServerError,
@@ -1545,9 +1548,10 @@ pub async fn get_workspaces(
             )
         })?
         .into_iter()
-        .map(|(_slug, _name)| WorkspaceSummary {
+        .map(|(_slug, _name, _is_active)| WorkspaceSummary {
             slug: _slug,
             name: _name,
+            is_active: _is_active,
         })
         .collect();
 
