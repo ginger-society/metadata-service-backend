@@ -52,6 +52,8 @@ fn rocket() -> Rocket<Build> {
                 metadata::update_pipeline_status,
                 metadata::create_organization,
                 metadata::update_block_positions,
+                metadata::get_workspaces,
+                metadata::get_workspace,
             ],
         )
         .mount(

@@ -1514,3 +1514,90 @@ pub async fn update_block_positions(
         ))
     }
 }
+
+#[derive(Serialize, JsonSchema)]
+pub struct WorkspaceSummary {
+    slug: String,
+    name: Option<String>,
+}
+
+#[openapi()]
+#[get("/get-workspaces")]
+pub async fn get_workspaces(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+) -> Result<Json<Vec<WorkspaceSummary>>, status::Custom<String>> {
+    use crate::models::schema::schema::organization::dsl::*;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let workspaces: Vec<WorkspaceSummary> = organization
+        .select((slug, name))
+        .load::<(String, Option<String>)>(&mut conn)
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving workspaces".to_string(),
+            )
+        })?
+        .into_iter()
+        .map(|(_slug, _name)| WorkspaceSummary {
+            slug: _slug,
+            name: _name,
+        })
+        .collect();
+
+    Ok(Json(workspaces))
+}
+
+#[derive(Serialize, JsonSchema)]
+pub struct WorkspaceDetail {
+    name: Option<String>,
+    block_positions: Option<String>,
+    is_active: bool,
+}
+
+#[openapi()]
+#[get("/get-workspace/<org_id>")]
+pub async fn get_workspace(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    org_id: String,
+) -> Result<Json<WorkspaceDetail>, status::Custom<String>> {
+    use crate::models::schema::schema::organization::dsl::*;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let workspace = organization
+        .filter(slug.eq(org_id))
+        .select((name, blocks_positions, is_active))
+        .first::<(Option<String>, Option<String>, bool)>(&mut conn)
+        .optional()
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving workspace".to_string(),
+            )
+        })?;
+
+    if let Some((_name, _block_positions, _is_active)) = workspace {
+        Ok(Json(WorkspaceDetail {
+            name: _name,
+            block_positions: _block_positions,
+            is_active: _is_active,
+        }))
+    } else {
+        Err(status::Custom(
+            Status::NotFound,
+            "Workspace not found".to_string(),
+        ))
+    }
+}
