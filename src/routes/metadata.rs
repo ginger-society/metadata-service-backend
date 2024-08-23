@@ -69,6 +69,7 @@ pub struct GetDbschemaByIdResponse {
     pub updated_at: chrono::DateTime<Utc>,
     pub data: Option<String>,
     pub branch_id: Option<i64>,
+    pub org_id: Option<String>,
 }
 
 #[derive(Deserialize, JsonSchema, Serialize)]
@@ -312,6 +313,7 @@ pub fn get_dbschema_by_id(
         name: result_dbschema.name.clone(),
         description: result_dbschema.description.clone(),
         updated_at: result_dbschema.updated_at,
+        org_id: result_dbschema.organization_id,
         data: None,
         branch_id: None,
         version: None,
