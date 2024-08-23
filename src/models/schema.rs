@@ -157,6 +157,8 @@ pub mod schema {
             is_active ->Bool,
             #[max_length = 40000]
             blocks_positions ->Nullable<Varchar>,
+            #[max_length = 100]
+            name ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -327,6 +329,7 @@ pub struct Organization {
     pub group_id:String,
     pub is_active:bool,
     pub blocks_positions:Option<String>,
+    pub name:Option<String>,
     pub id:i64,
     
 }
@@ -457,5 +460,6 @@ pub struct OrganizationInsertable {
     pub group_id:String,
     pub is_active:bool,
     pub blocks_positions:Option<String>,
+    pub name:Option<String>,
     
 }

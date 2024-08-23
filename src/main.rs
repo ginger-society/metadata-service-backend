@@ -49,7 +49,8 @@ fn rocket() -> Rocket<Build> {
                 metadata::create_or_update_package,
                 metadata::get_user_packages,
                 metadata::get_dbschemas_and_tables,
-                metadata::update_pipeline_status
+                metadata::update_pipeline_status,
+                metadata::create_organization
             ],
         )
         .mount(

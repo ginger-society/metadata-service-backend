@@ -1346,3 +1346,118 @@ pub async fn update_pipeline_status(
 
     Ok(status::NoContent)
 }
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+pub struct CreateOrganizationRequest {
+    pub name: String,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct CreateOrganizationResponse {
+    pub message: String,
+    pub id: i64,
+}
+
+use crate::models::schema::Organization;
+use crate::models::schema::OrganizationInsertable;
+
+use regex::Regex;
+
+fn to_slug(input: &str) -> String {
+    // Lowercase the input string
+    let mut slug = input.to_lowercase();
+
+    // Remove everything except alphabets a-z and spaces
+    let re = Regex::new(r"[^a-z\s]").unwrap();
+    slug = re.replace_all(&slug, " ").to_string();
+
+    // Trim the string
+    slug = slug.trim().to_string();
+
+    // Replace single and multiple consecutive spaces with a hyphen
+    let re_spaces = Regex::new(r"\s+").unwrap();
+    slug = re_spaces.replace_all(&slug, "-").to_string();
+
+    slug
+}
+
+#[openapi()]
+#[post("/organization", data = "<create_request>")]
+pub async fn create_organization(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    create_request: Json<CreateOrganizationRequest>,
+    claims: Claims,
+    iam_service_config: IAMService_config,
+) -> Result<status::Created<Json<CreateOrganizationResponse>>, status::Custom<String>> {
+    use crate::models::schema::schema::organization::dsl::*;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let org_slug = to_slug(&create_request.name);
+
+    // Check if organization with the slug already exists
+    let existing_org = organization
+        .filter(slug.eq(&org_slug))
+        .first::<Organization>(&mut conn)
+        .optional()
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error checking existing organization".to_string(),
+            )
+        })?;
+
+    if let Some(_) = existing_org {
+        return Err(status::Custom(
+            Status::Conflict,
+            "Workspace ID is already taken".to_string(),
+        ));
+    }
+
+    let group_uuid = Uuid::new_v4().to_string();
+
+    match identity_create_group(
+        &iam_service_config.0,
+        IdentityCreateGroupParams {
+            create_group_request: CreateGroupRequest::new(group_uuid.clone()),
+        },
+    )
+    .await
+    {
+        Ok(response) => {
+            let new_organization = OrganizationInsertable {
+                slug: org_slug,
+                group_id: response.identifier,
+                name: Some(create_request.name.clone()),
+                is_active: true,
+                blocks_positions: None,
+            };
+
+            let created_organization: Organization = diesel::insert_into(organization)
+                .values(&new_organization)
+                .get_result::<Organization>(&mut conn)
+                .map_err(|_| {
+                    status::Custom(
+                        Status::InternalServerError,
+                        "Error inserting new organization".to_string(),
+                    )
+                })?;
+
+            Ok(
+                status::Created::new("/organization").body(Json(CreateOrganizationResponse {
+                    message: "Organization created successfully".to_string(),
+                    id: created_organization.id,
+                })),
+            )
+        }
+        Err(_) => Err(status::Custom(
+            Status::InternalServerError,
+            "Failed to create group in IAM service".to_string(),
+        )),
+    }
+}
