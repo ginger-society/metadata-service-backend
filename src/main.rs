@@ -50,7 +50,8 @@ fn rocket() -> Rocket<Build> {
                 metadata::get_user_packages,
                 metadata::get_dbschemas_and_tables,
                 metadata::update_pipeline_status,
-                metadata::create_organization
+                metadata::create_organization,
+                metadata::update_block_positions,
             ],
         )
         .mount(

@@ -1461,3 +1461,56 @@ pub async fn create_organization(
         )),
     }
 }
+
+#[openapi()]
+#[post("/update-block-positions/<org_id>", data = "<block_positions>")]
+pub async fn update_block_positions(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    org_id: String,
+    block_positions: String,
+) -> Result<status::Accepted<String>, status::Custom<String>> {
+    use crate::models::schema::schema::organization::dsl::*;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    // Check if the organization exists
+    let existing_org = organization
+        .filter(slug.eq(org_id.clone()))
+        .first::<Organization>(&mut conn)
+        .optional()
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error checking organization existence".to_string(),
+            )
+        })?;
+
+    if let Some(mut org) = existing_org {
+        // Update block_positions
+        org.blocks_positions = Some(block_positions);
+
+        diesel::update(organization.filter(slug.eq(org_id)))
+            .set(blocks_positions.eq(org.blocks_positions))
+            .execute(&mut conn)
+            .map_err(|_| {
+                status::Custom(
+                    Status::InternalServerError,
+                    "Error updating block positions".to_string(),
+                )
+            })?;
+
+        Ok(status::Accepted(
+            "Block positions updated successfully".to_string(),
+        ))
+    } else {
+        Err(status::Custom(
+            Status::NotFound,
+            "Organization not found".to_string(),
+        ))
+    }
+}
