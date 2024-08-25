@@ -1619,3 +1619,48 @@ pub async fn get_workspace(
         ))
     }
 }
+#[openapi()]
+#[get("/get-workspace-details/<org_id>")]
+pub async fn get_workspace_details(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    groups_owned: GroupOwnerships,
+    org_id: String,
+) -> Result<Json<WorkspaceSummary>, status::Custom<String>> {
+    use crate::models::schema::schema::organization::dsl::*;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let ownerships: Vec<String> = groups_owned.0;
+
+    let workspace = organization
+        .filter(slug.eq(&org_id))
+        .filter(group_id.eq_any(&ownerships))
+        .select((slug, name, is_active, group_id))
+        .first::<(String, Option<String>, bool, String)>(&mut conn)
+        .optional()
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving workspace".to_string(),
+            )
+        })?;
+
+    match workspace {
+        Some((_slug, _name, _is_active, _group_id)) => Ok(Json(WorkspaceSummary {
+            slug: _slug,
+            name: _name,
+            is_active: _is_active,
+            group_id: _group_id,
+            is_admin: true,
+        })),
+        None => Err(status::Custom(
+            Status::NotFound,
+            "Workspace not found".to_string(),
+        )),
+    }
+}
