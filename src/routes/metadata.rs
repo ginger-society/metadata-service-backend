@@ -1522,6 +1522,7 @@ pub struct WorkspaceSummary {
     name: Option<String>,
     is_active: bool,
     is_admin: bool,
+    group_id: String,
 }
 
 #[openapi()]
@@ -1559,6 +1560,7 @@ pub async fn get_workspaces(
             name: _name,
             is_active: _is_active,
             is_admin: ownerships.contains(&_group_id),
+            group_id: _group_id,
         })
         .collect();
 
