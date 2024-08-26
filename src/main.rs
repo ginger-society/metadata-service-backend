@@ -54,7 +54,8 @@ fn rocket() -> Rocket<Build> {
                 metadata::update_block_positions,
                 metadata::get_workspaces,
                 metadata::get_workspace,
-                metadata::get_workspace_details
+                metadata::get_workspace_details,
+                metadata::delete_workspace
             ],
         )
         .mount(

@@ -1664,3 +1664,45 @@ pub async fn get_workspace_details(
         )),
     }
 }
+
+use crate::routes::MessageResponse;
+
+#[openapi()]
+#[delete("/manage-workspace/<org_id>/delete")]
+pub async fn delete_workspace(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    org_id: String,
+    groups_owned: GroupOwnerships,
+) -> Result<Json<MessageResponse>, rocket::http::Status> {
+    use crate::models::schema::schema::organization::dsl::*;
+
+    let mut conn = rdb.get().map_err(|_| Status::ServiceUnavailable)?;
+
+    let ownerships: Vec<String> = groups_owned.0;
+
+    // Fetch the workspace to ensure it exists and check if the user has permission to delete it
+    let workspace = organization
+        .filter(slug.eq(org_id.clone()))
+        .select((group_id))
+        .first::<String>(&mut conn)
+        .optional()
+        .map_err(|_| Status::InternalServerError)?;
+
+    if let Some(_group_id) = workspace {
+        // Check if the user owns the group to which the workspace belongs
+        if ownerships.contains(&_group_id) {
+            // Proceed to delete the workspace
+            diesel::delete(organization.filter(slug.eq(org_id)))
+                .execute(&mut conn)
+                .map_err(|_| Status::InternalServerError)?;
+
+            Ok(Json(MessageResponse {
+                message: "Workspace successfully deleted".to_string(),
+            }))
+        } else {
+            Err(Status::Forbidden)
+        }
+    } else {
+        Err(Status::NotFound)
+    }
+}
