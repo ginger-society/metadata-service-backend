@@ -723,11 +723,12 @@ pub struct ServicesTrimmedResponse {
 }
 
 #[openapi]
-#[get("/services-and-envs?<page_number>&<page_size>")]
+#[get("/services-and-envs/<org_id>?<page_number>&<page_size>")]
 pub fn get_services_and_envs(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     claims: Claims,
     groups: GroupMemberships,
+    org_id: String,
     page_number: Option<String>,
     page_size: Option<String>,
 ) -> Result<Json<Vec<ServicesTrimmedResponse>>, rocket::http::Status> {
@@ -757,6 +758,7 @@ pub fn get_services_and_envs(
     // Query services and their associated environments for the user's groups
     let services_with_envs = service
         .filter(group_id.eq_any(&group_ids))
+        .filter(organization_id.eq(org_id))
         .offset(offset)
         .limit(page_size)
         .load::<Service>(&mut conn)
@@ -1089,11 +1091,12 @@ pub struct PackageResponse {
 }
 
 #[openapi()]
-#[get("/packages/<env>")]
+#[get("/packages/<org_id>/<env>")]
 pub async fn get_user_packages(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     _claims: Claims,
     env: String,
+    org_id: String,
     groups: GroupMemberships,
 ) -> Result<Json<Vec<PackageResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::package::dsl::*;
@@ -1116,6 +1119,7 @@ pub async fn get_user_packages(
         .inner_join(package_env_dsl::package_env.on(package_env_dsl::parent_id.eq(id)))
         .filter(group_id.eq_any(memberships))
         .filter(package_env_dsl::env.eq(env))
+        .filter(organization_id.eq(org_id))
         .select((
             package::all_columns(),
             package_env_dsl::version,
@@ -1150,11 +1154,12 @@ pub async fn get_user_packages(
 }
 
 #[openapi()]
-#[get("/dbschemas-and-tables/<env>")]
+#[get("/dbschemas-and-tables/<org_id>/<env>")]
 pub fn get_dbschemas_and_tables(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     groups: GroupMemberships,
     env: String,
+    org_id: String,
     _claims: Claims,
 ) -> Result<Json<Vec<GetDbschemaAndTablesResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl::*;
@@ -1170,7 +1175,10 @@ pub fn get_dbschemas_and_tables(
 
     let memberships: Vec<String> = groups.0;
 
-    let query = dbschema.filter(group_id.eq_any(memberships)).into_boxed();
+    let query = dbschema
+        .filter(organization_id.eq(org_id))
+        .filter(group_id.eq_any(memberships))
+        .into_boxed();
 
     let results = query.load::<Dbschema>(&mut conn).map_err(|_| {
         status::Custom(
