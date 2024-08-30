@@ -1464,10 +1464,13 @@ pub async fn create_organization(
                 })),
             )
         }
-        Err(_) => Err(status::Custom(
-            Status::InternalServerError,
-            "Failed to create group in IAM service".to_string(),
-        )),
+        Err(e) => {
+            println!("{:?}", e);
+            Err(status::Custom(
+                Status::InternalServerError,
+                "Failed to create group in IAM service".to_string(),
+            ))
+        }
     }
 }
 
@@ -1537,17 +1540,19 @@ pub struct WorkspaceSummary {
 #[get("/get-workspaces")]
 pub async fn get_workspaces(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    _claims: Claims,
     groups_owned: GroupOwnerships,
     groups: GroupMemberships,
 ) -> Result<Json<Vec<WorkspaceSummary>>, status::Custom<String>> {
     use crate::models::schema::schema::organization::dsl::*;
 
-    let mut conn = rdb.get().map_err(|_| {
-        status::Custom(
-            Status::ServiceUnavailable,
-            "Failed to get DB connection".to_string(),
-        )
-    })?;
+    let mut conn: diesel::r2d2::PooledConnection<ConnectionManager<PgConnection>> =
+        rdb.get().map_err(|_| {
+            status::Custom(
+                Status::ServiceUnavailable,
+                "Failed to get DB connection".to_string(),
+            )
+        })?;
 
     let ownerships: Vec<String> = groups_owned.0;
     let memberships: Vec<String> = groups.0;
