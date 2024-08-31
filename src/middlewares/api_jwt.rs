@@ -72,10 +72,10 @@ impl<'a> OpenApiFromRequest<'a> for APIClaims {
         };
 
         let mut security_req = SecurityRequirement::new();
-        security_req.insert("BearerAuth".to_owned(), Vec::new());
+        security_req.insert("BearerAPIAuth".to_owned(), Vec::new());
 
         Ok(RequestHeaderInput::Security(
-            "BearerAuth".to_owned(),
+            "BearerAPIAuth".to_owned(),
             security_scheme,
             security_req,
         ))
