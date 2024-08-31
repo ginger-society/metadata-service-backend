@@ -16,6 +16,7 @@ pub struct APIClaims {
     pub sub: String,
     pub exp: usize,
     pub group_id: i64,
+    pub scopes: Vec<String>,
 }
 
 use std::env;
@@ -35,7 +36,7 @@ impl<'r> FromRequest<'r> for APIClaims {
     type Error = APIClaimsError;
 
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let keys: Vec<_> = request.headers().get("Authorization").collect();
+        let keys: Vec<_> = request.headers().get("X-API-Authorization").collect();
         if keys.len() != 1 {
             return Outcome::Error((Status::Unauthorized, APIClaimsError::Missing));
         }
@@ -64,7 +65,7 @@ impl<'a> OpenApiFromRequest<'a> for APIClaims {
         let security_scheme = SecurityScheme {
             description: Some("Requires a Bearer token to access".to_owned()),
             data: SecuritySchemeData::ApiKey {
-                name: "Authorization".to_owned(),
+                name: "X-API-Authorization".to_owned(),
                 location: "header".to_owned(),
             },
             extensions: Object::default(),

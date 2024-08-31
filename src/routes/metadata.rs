@@ -1,3 +1,4 @@
+use crate::middlewares::api_jwt::APIClaims;
 use crate::middlewares::groups::GroupMemberships;
 use crate::middlewares::groups_owned;
 use crate::middlewares::groups_owned::GroupOwnerships;
@@ -527,7 +528,7 @@ pub async fn update_or_create_service(
     service_request: Json<UpdateServiceRequest>,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     iam_service_config: IAMService_config,
-    _claims: Claims,
+    _claims: APIClaims,
 ) -> Result<Json<UpdateServiceResponse>, status::Custom<String>> {
     use crate::models::schema::schema::service::dsl::*;
     use crate::models::schema::schema::service_envs::dsl as service_env_dsl;
@@ -726,7 +727,7 @@ pub struct ServicesTrimmedResponse {
 #[get("/services-and-envs/<org_id>?<page_number>&<page_size>")]
 pub fn get_services_and_envs(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
-    claims: Claims,
+    _claims: APIClaims,
     groups: GroupMemberships,
     org_id: String,
     page_number: Option<String>,
@@ -807,7 +808,7 @@ pub fn get_service_and_env_by_id(
     service_identifier: String,
     env: String,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
-    claims: Claims,
+    claims: APIClaims,
     groups: GroupMemberships,
 ) -> Result<Json<ServicesEnvResponse>, rocket::http::Status> {
     use crate::models::schema::schema::service::dsl::*;
@@ -930,7 +931,7 @@ pub async fn create_or_update_package(
     package_request: Json<CreateOrUpdatePackageRequest>,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     iam_service_config: IAMService_config,
-    _claims: Claims,
+    _claims: APIClaims,
 ) -> Result<status::Created<Json<CreateOrUpdatePackageResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::package::dsl::*;
     use crate::models::schema::schema::package_env::dsl as package_env_dsl;
@@ -1109,8 +1110,6 @@ pub async fn get_user_packages(
         )
     })?;
 
-    let user_id = _claims.user_id;
-
     // Get all group_ids the user is a member of
     let memberships: Vec<String> = groups.0;
 
@@ -1248,6 +1247,7 @@ pub struct PipelineStatusUpdateRequest {
 pub async fn update_pipeline_status(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     status_update: Json<PipelineStatusUpdateRequest>,
+    _claims: APIClaims,
 ) -> Result<status::NoContent, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl as dbschema_dsl;
     use crate::models::schema::schema::dbschema_branch::dsl as dbschema_branch_dsl;
