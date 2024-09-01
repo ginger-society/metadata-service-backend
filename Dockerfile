@@ -12,7 +12,7 @@ RUN chmod +x /app/build.sh
 ARG GINGER_TOKEN
 ENV GINGER_TOKEN=$GINGER_TOKEN
 
-RUN ginger-connector connect stage-k8
+# RUN ginger-connector connect stage-k8
 
 # Execute the build script
 RUN /app/build.sh

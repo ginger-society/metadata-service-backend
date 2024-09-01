@@ -809,7 +809,6 @@ pub fn get_service_and_env_by_id(
     env: String,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     claims: APIClaims,
-    groups: GroupMemberships,
 ) -> Result<Json<ServicesEnvResponse>, rocket::http::Status> {
     use crate::models::schema::schema::service::dsl::*;
     use crate::models::schema::schema::service_envs::dsl as service_envs_dsl;
@@ -818,16 +817,9 @@ pub fn get_service_and_env_by_id(
         .get()
         .map_err(|_| rocket::http::Status::ServiceUnavailable)?;
 
-    // Extract group IDs from the `groups` parameter
-    let group_ids: Vec<String> = groups.0;
-
     // Query the service by ID and ensure it belongs to one of the user's groups
     let service_item = service
-        .filter(
-            identifier
-                .eq(service_identifier)
-                .and(group_id.eq_any(&group_ids)),
-        )
+        .filter(identifier.eq(service_identifier))
         .filter(organization_id.eq(org_id))
         .first::<Service>(&mut conn)
         .map_err(|_| rocket::http::Status::NotFound)?;
