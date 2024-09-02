@@ -724,11 +724,10 @@ pub struct ServicesTrimmedResponse {
 }
 
 #[openapi]
-#[get("/services-and-envs/<org_id>?<page_number>&<page_size>")]
-pub fn get_services_and_envs(
+#[get("/user-land/services-and-envs/<org_id>?<page_number>&<page_size>")]
+pub fn get_services_and_envs_user_land(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
-    _claims: APIClaims,
-    groups: GroupMemberships,
+    _claims: Claims,
     org_id: String,
     page_number: Option<String>,
     page_size: Option<String>,
@@ -739,9 +738,6 @@ pub fn get_services_and_envs(
     let mut conn = rdb
         .get()
         .map_err(|_| rocket::http::Status::ServiceUnavailable)?;
-
-    // Extract group IDs from the `groups` parameter
-    let group_ids: Vec<String> = groups.0;
 
     let page_number = page_number
         .as_deref()
@@ -758,7 +754,79 @@ pub fn get_services_and_envs(
 
     // Query services and their associated environments for the user's groups
     let services_with_envs = service
-        .filter(group_id.eq_any(&group_ids))
+        .filter(organization_id.eq(org_id))
+        .offset(offset)
+        .limit(page_size)
+        .load::<Service>(&mut conn)
+        .map_err(|_| rocket::http::Status::InternalServerError)?
+        .into_iter()
+        .map(|s| {
+            let envs = service_envs
+                .filter(parent_id.eq(s.id))
+                .load::<Service_Envs>(&mut conn)
+                .map_err(|_| rocket::http::Status::InternalServerError)?;
+
+            let env_responses: Vec<ServicesEnvTrimmedResponse> = envs
+                .into_iter()
+                .map(|e| ServicesEnvTrimmedResponse {
+                    env_key: e.env,
+                    base_url: e.base_url,
+                    updated_at: e.updated_at,
+                    version: Some(e.version),
+                    pipeline_status: e.pipeline_status,
+                })
+                .collect();
+
+            // Transform `Service` into `ServicesResponse`
+            Ok(ServicesTrimmedResponse {
+                identifier: s.identifier,
+                envs: env_responses,
+                tables: serde_json::from_str(&s.tables_json.unwrap()).unwrap(),
+                dependencies: serde_json::from_str(&s.dependencies_json.unwrap()).unwrap(),
+                db_schema_id: s.db_schema_id,
+                service_type: Some(s.service_type),
+                lang: s.lang,
+                organization_id: s.organization_id.unwrap_or(String::from("")),
+                description: s.description.unwrap_or(String::from("")),
+                repo_origin: s.repo_origin,
+            })
+        })
+        .collect::<Result<Vec<ServicesTrimmedResponse>, rocket::http::Status>>()?;
+
+    Ok(Json(services_with_envs))
+}
+
+#[openapi]
+#[get("/services-and-envs/<org_id>?<page_number>&<page_size>")]
+pub fn get_services_and_envs(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    _claims: APIClaims,
+    org_id: String,
+    page_number: Option<String>,
+    page_size: Option<String>,
+) -> Result<Json<Vec<ServicesTrimmedResponse>>, rocket::http::Status> {
+    use crate::models::schema::schema::service::dsl::*;
+    use crate::models::schema::schema::service_envs::dsl::*;
+
+    let mut conn = rdb
+        .get()
+        .map_err(|_| rocket::http::Status::ServiceUnavailable)?;
+
+    let page_number = page_number
+        .as_deref()
+        .unwrap_or("1")
+        .parse::<i64>()
+        .unwrap_or(1);
+    let page_size = page_size
+        .as_deref()
+        .unwrap_or("10")
+        .parse::<i64>()
+        .unwrap_or(10);
+
+    let offset = (page_number - 1) * page_size;
+
+    // Query services and their associated environments for the user's groups
+    let services_with_envs = service
         .filter(organization_id.eq(org_id))
         .offset(offset)
         .limit(page_size)
