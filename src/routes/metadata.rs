@@ -908,6 +908,45 @@ pub fn get_service_and_env_by_id(
     Ok(Json(env_response))
 }
 
+#[openapi]
+#[get("/user-land/services-and-envs/<org_id>/<service_identifier>/<env>")]
+pub fn get_service_and_env_by_id_user_land(
+    org_id: String,
+    service_identifier: String,
+    env: String,
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    claims: Claims,
+) -> Result<Json<ServicesEnvResponse>, rocket::http::Status> {
+    use crate::models::schema::schema::service::dsl::*;
+    use crate::models::schema::schema::service_envs::dsl as service_envs_dsl;
+
+    let mut conn = rdb
+        .get()
+        .map_err(|_| rocket::http::Status::ServiceUnavailable)?;
+
+    // Query the service by ID and ensure it belongs to one of the user's groups
+    let service_item = service
+        .filter(identifier.eq(service_identifier))
+        .filter(organization_id.eq(org_id))
+        .first::<Service>(&mut conn)
+        .map_err(|_| rocket::http::Status::NotFound)?;
+
+    // Query the specific environment for the service
+    let env_item = service_envs_dsl::service_envs
+        .filter(service_envs_dsl::parent_id.eq(service_item.id))
+        .filter(service_envs_dsl::env.eq(env))
+        .first::<Service_Envs>(&mut conn)
+        .map_err(|_| rocket::http::Status::NotFound)?;
+
+    // Transform `ServiceEnvs` into `ServicesEnvResponse`
+    let env_response = ServicesEnvResponse {
+        spec: env_item.spec,
+        base_url: env_item.base_url,
+    };
+
+    Ok(Json(env_response))
+}
+
 #[derive(Serialize, JsonSchema, Debug)]
 pub struct ServiceResponse {
     pub id: i64,
