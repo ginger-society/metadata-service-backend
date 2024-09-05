@@ -869,6 +869,46 @@ pub fn get_services_and_envs(
     Ok(Json(services_with_envs))
 }
 
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct APISessionDetails {
+    sub: String,
+    exp: usize,
+    scopes: Vec<String>,
+    group_id: i64,
+    org_id: String,
+}
+
+#[openapi]
+#[get("/get-current-workspace")]
+pub fn get_current_workspace(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    claims: APIClaims,
+) -> Result<Json<APISessionDetails>, rocket::http::Status> {
+    use crate::models::schema::schema::organization::dsl::*;
+    let mut conn = rdb
+        .get()
+        .map_err(|_| rocket::http::Status::InternalServerError)?;
+
+    let result = organization
+        .filter(group_id.eq(claims.sub.clone()))
+        .first::<Organization>(&mut conn)
+        .optional()
+        .map_err(|_| rocket::http::Status::InternalServerError)?;
+
+    if let Some(org) = result {
+        let session_details = APISessionDetails {
+            sub: claims.sub,
+            exp: claims.exp,
+            scopes: claims.scopes,
+            group_id: claims.group_id,
+            org_id: org.slug, // Assuming org_id maps to group_id in Organization
+        };
+        Ok(Json(session_details))
+    } else {
+        Err(rocket::http::Status::NotFound)
+    }
+}
+
 #[openapi]
 #[get("/services-and-envs/<org_id>/<service_identifier>/<env>")]
 pub fn get_service_and_env_by_id(

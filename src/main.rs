@@ -57,7 +57,8 @@ fn rocket() -> Rocket<Build> {
                 metadata::get_workspace_details,
                 metadata::delete_workspace,
                 metadata::get_services_and_envs_user_land,
-                metadata::get_service_and_env_by_id_user_land
+                metadata::get_service_and_env_by_id_user_land,
+                metadata::get_current_workspace,
             ],
         )
         .mount(
