@@ -91,6 +91,8 @@ pub mod schema {
             organization_id ->Nullable<Varchar>,
             #[max_length = 200]
             repo_origin ->Nullable<Varchar>,
+            #[max_length = 250]
+            cache_schema_id ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -266,6 +268,7 @@ pub struct Service {
     pub description:Option<String>,
     pub organization_id:Option<String>,
     pub repo_origin:Option<String>,
+    pub cache_schema_id:Option<String>,
     pub id:i64,
     
 }
@@ -402,6 +405,7 @@ pub struct ServiceInsertable {
     pub description:Option<String>,
     pub organization_id:Option<String>,
     pub repo_origin:Option<String>,
+    pub cache_schema_id:Option<String>,
     
 }
 

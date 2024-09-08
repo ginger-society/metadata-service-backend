@@ -567,6 +567,7 @@ pub struct UpdateServiceRequest {
     pub dependencies: Vec<String>,
     pub tables: Vec<String>,
     pub db_schema_id: Option<String>,
+    pub cache_schema_id: Option<String>,
     pub service_type: Option<String>,
     pub version: Option<String>,
     pub lang: Option<String>,
@@ -631,6 +632,7 @@ pub async fn update_or_create_service(
                     serde_json::to_string(&service_request.tables).unwrap(),
                 )),
                 repo_origin.eq(&service_request.repo_origin),
+                cache_schema_id.eq(&service_request.cache_schema_id),
             ))
             .execute(&mut conn)
             .map_err(|_| {
@@ -672,6 +674,7 @@ pub async fn update_or_create_service(
             organization_id: Some(service_request.organization_id.clone()),
             description: Some(service_request.description.clone()),
             repo_origin: service_request.repo_origin.clone(),
+            cache_schema_id: service_request.cache_schema_id.clone(),
         };
 
         diesel::insert_into(service)
@@ -775,6 +778,7 @@ pub struct ServicesTrimmedResponse {
     pub tables: Vec<String>,
     pub dependencies: Vec<String>,
     pub db_schema_id: Option<String>,
+    pub cache_schema_id: Option<String>,
     pub service_type: Option<String>,
     pub lang: Option<String>,
     pub description: String,
@@ -843,6 +847,7 @@ pub fn get_services_and_envs_user_land(
                 tables: serde_json::from_str(&s.tables_json.unwrap()).unwrap(),
                 dependencies: serde_json::from_str(&s.dependencies_json.unwrap()).unwrap(),
                 db_schema_id: s.db_schema_id,
+                cache_schema_id: s.cache_schema_id,
                 service_type: Some(s.service_type),
                 lang: s.lang,
                 organization_id: s.organization_id.unwrap_or(String::from("")),
@@ -916,6 +921,7 @@ pub fn get_services_and_envs(
                 tables: serde_json::from_str(&s.tables_json.unwrap()).unwrap(),
                 dependencies: serde_json::from_str(&s.dependencies_json.unwrap()).unwrap(),
                 db_schema_id: s.db_schema_id,
+                cache_schema_id: s.cache_schema_id,
                 service_type: Some(s.service_type),
                 lang: s.lang,
                 organization_id: s.organization_id.unwrap_or(String::from("")),
