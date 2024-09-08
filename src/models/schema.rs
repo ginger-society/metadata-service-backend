@@ -32,6 +32,7 @@ pub mod schema {
             organization_id ->Nullable<Varchar>,
             #[max_length = 200]
             repo_origin ->Nullable<Varchar>,
+            db_type ->Varchar,
             id ->BigInt,
             
         }
@@ -213,6 +214,7 @@ pub struct Dbschema {
     pub identifier:Option<String>,
     pub organization_id:Option<String>,
     pub repo_origin:Option<String>,
+    pub db_type:String,
     pub id:i64,
     
 }
@@ -351,6 +353,7 @@ pub struct DbschemaInsertable {
     pub identifier:Option<String>,
     pub organization_id:Option<String>,
     pub repo_origin:Option<String>,
+    pub db_type:String,
     
 }
 

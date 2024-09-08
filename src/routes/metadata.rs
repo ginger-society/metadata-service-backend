@@ -30,6 +30,7 @@ pub struct CreateDbschemaRequest {
     pub description: Option<String>,
     pub data: Option<String>,
     pub organisation_id: String,
+    pub db_type: String,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -133,6 +134,7 @@ pub async fn create_dbschema(
                 identifier: Some(dbschema_uuid),
                 organization_id: Some(create_request.organisation_id.clone()),
                 repo_origin: None,
+                db_type: create_request.db_type.clone(),
             };
 
             let created_dbschema: Dbschema = diesel::insert_into(dbschema)
