@@ -1897,3 +1897,36 @@ pub async fn delete_workspace(
         Err(Status::NotFound)
     }
 }
+
+#[openapi()]
+#[get("/version/<org_id>/<package_name>")]
+pub async fn get_package_version_plain_text(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    org_id: String,
+    package_name: String,
+) -> Result<String, status::Custom<String>> {
+    use crate::models::schema::schema::package::dsl::*;
+    use crate::models::schema::schema::package_env::dsl as package_env_dsl;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    // Fetch the latest version of the package for the given org_id and package_name
+    let version_result = package
+        .inner_join(package_env_dsl::package_env.on(package_env_dsl::parent_id.eq(id)))
+        .filter(organization_id.eq(org_id))
+        .filter(identifier.eq(package_name))
+        .order_by(package_env_dsl::version.desc()) // Order by version descending to get the latest version
+        .select(package_env_dsl::version)
+        .first::<String>(&mut conn)
+        .map_err(|_| {
+            status::Custom(Status::NotFound, "Package or version not found".to_string())
+        })?;
+
+    // Return the version as plain text
+    Ok(version_result)
+}
