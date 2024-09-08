@@ -1419,7 +1419,7 @@ pub fn get_dbschemas_and_tables(
                 tables,
                 pipeline_status: branch.clone().unwrap().pipeline_status,
                 repo_origin: db_schema_.repo_origin,
-                db_type: db_schema_.db_type.unwrap(),
+                db_type: Some(db_schema_.db_type),
             }
         })
         .collect();
