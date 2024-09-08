@@ -237,7 +237,7 @@ pub fn get_dbschemas(
 #[openapi()]
 #[put("/dbschema/<schema_id>", data = "<update_request>")]
 pub fn update_dbschema(
-    schema_id: i64,
+    schema_id: String,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     update_request: Json<UpdateDbschemaRequest>,
 ) -> Result<Json<Dbschema>, status::Custom<String>> {
@@ -250,7 +250,7 @@ pub fn update_dbschema(
         )
     })?;
 
-    let updated_rows = diesel::update(dbschema.filter(id.eq(schema_id)))
+    let updated_rows = diesel::update(dbschema.filter(identifier.eq(schema_id.clone())))
         .set((
             name.eq(update_request.name.clone()),
             description.eq(update_request.description.clone()),
@@ -272,7 +272,7 @@ pub fn update_dbschema(
     }
 
     let updated_dbschema = dbschema
-        .find(schema_id)
+        .filter(identifier.eq(schema_id))
         .first::<Dbschema>(&mut conn)
         .map_err(|_| {
             status::Custom(
