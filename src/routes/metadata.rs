@@ -98,7 +98,7 @@ pub struct CreateDbschemaBranchResponse {
 pub async fn create_dbschema(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     create_request: Json<CreateDbschemaRequest>,
-    claims: Claims,
+    claims: APIClaims,
     iam_service_config: IAMService_config,
 ) -> Result<status::Created<Json<CreateDbschemaResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl::*;
