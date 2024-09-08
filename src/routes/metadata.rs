@@ -1184,29 +1184,13 @@ pub async fn create_or_update_package(
 
         p.id
     } else {
-        // Create a new group in IAM service
-        let group_uuid = Uuid::new_v4().to_string();
-
-        let group_response = identity_create_group(
-            &iam_service_config.0,
-            IdentityCreateGroupParams {
-                create_group_request: CreateGroupRequest::new(group_uuid.clone()),
-            },
-        )
-        .await
-        .map_err(|e| {
-            println!("{:?}", e);
-            status::Custom(Status::InternalServerError, e.to_string())
-        })?;
-
-        // Create a new package
         let new_package = PackageInsertable {
             identifier: package_identifier.clone(),
             package_type: package_request.package_type.clone(),
             lang: package_request.lang.clone(),
             created_at: Some(Utc::now()),
             updated_at: Utc::now(),
-            group_id: Some(group_response.identifier), // Use the group_id from IAM service response
+            group_id: None, // Use the group_id from IAM service response
             description: Some(package_request.description.clone()),
             organization_id: Some(package_request.organization_id.clone()),
             dependencies_json: Some(serde_json::to_string(&package_request.dependencies).unwrap()),
