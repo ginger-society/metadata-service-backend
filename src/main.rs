@@ -40,6 +40,7 @@ fn rocket() -> Rocket<Build> {
                 metadata::get_dbschemas,
                 metadata::update_dbschema,
                 metadata::get_dbschema_by_id,
+                metadata::get_dbschema_by_id_userland,
                 metadata::create_dbschema_branch,
                 metadata::update_dbschema_branch,
                 metadata::update_or_create_service,

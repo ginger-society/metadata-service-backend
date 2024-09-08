@@ -348,6 +348,71 @@ pub fn get_dbschema_by_id(
 }
 
 #[openapi()]
+#[get("/user-land/dbschemas-branch/<schema_id>?<branch>")]
+pub fn get_dbschema_by_id_userland(
+    schema_id: String,
+    branch: Option<String>,
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    _claims: APIClaims,
+) -> Result<Json<GetDbschemaByIdResponse>, status::Custom<String>> {
+    use crate::models::schema::schema::dbschema::dsl::*;
+    use crate::models::schema::schema::dbschema_branch::dsl::*;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let result_dbschema = dbschema
+        .filter(identifier.eq(&schema_id))
+        .first::<Dbschema>(&mut conn)
+        .map_err(|_| {
+            status::Custom(
+                Status::NotFound,
+                format!("Dbschema with id {} not found", schema_id),
+            )
+        })?;
+
+    let mut response = GetDbschemaByIdResponse {
+        id: result_dbschema.id,
+        name: result_dbschema.name.clone(),
+        description: result_dbschema.description.clone(),
+        updated_at: result_dbschema.updated_at,
+        org_id: result_dbschema.organization_id,
+        data: None,
+        branch_id: None,
+        version: None,
+    };
+
+    if let Some(branch) = branch {
+        let result_branch: Dbschema_Branch = dbschema_branch
+            .filter(
+                parent_id
+                    .eq(result_dbschema.id)
+                    .and(branch_name.eq(&branch)),
+            )
+            .first::<Dbschema_Branch>(&mut conn)
+            .map_err(|_| {
+                status::Custom(
+                    Status::NotFound,
+                    format!(
+                        "Dbschema branch with parent_id {} and branch_name {} not found",
+                        schema_id, branch
+                    ),
+                )
+            })?;
+
+        response.version = result_branch.version.clone();
+        response.data = result_branch.data;
+        response.branch_id = Some(result_branch.id);
+    }
+
+    Ok(Json(response))
+}
+
+#[openapi()]
 #[post("/dbschemas/<schema_id>/branches", data = "<branch_request>")]
 pub fn create_dbschema_branch(
     schema_id: i64,
