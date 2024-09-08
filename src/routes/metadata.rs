@@ -58,6 +58,7 @@ pub struct GetDbschemaAndTablesResponse {
     pub version: Option<String>,
     pub updated_at: chrono::DateTime<Utc>,
     pub identifier: Option<String>,
+    pub db_type: Option<String>,
     pub organization_id: String,
     pub tables: Vec<String>,
     pub pipeline_status: Option<String>,
@@ -1418,6 +1419,7 @@ pub fn get_dbschemas_and_tables(
                 tables,
                 pipeline_status: branch.clone().unwrap().pipeline_status,
                 repo_origin: db_schema_.repo_origin,
+                db_type: db_schema_.db_type.unwrap(),
             }
         })
         .collect();
