@@ -1286,7 +1286,6 @@ pub async fn get_user_packages(
     _claims: Claims,
     env: String,
     org_id: String,
-    groups: GroupMemberships,
 ) -> Result<Json<Vec<PackageResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::package::dsl::*;
     use crate::models::schema::schema::package_env::dsl as package_env_dsl;
@@ -1298,13 +1297,9 @@ pub async fn get_user_packages(
         )
     })?;
 
-    // Get all group_ids the user is a member of
-    let memberships: Vec<String> = groups.0;
-
     // Get all packages associated with those group_ids
     let results = package
         .inner_join(package_env_dsl::package_env.on(package_env_dsl::parent_id.eq(id)))
-        .filter(group_id.eq_any(memberships))
         .filter(package_env_dsl::env.eq(env))
         .filter(organization_id.eq(org_id))
         .select((
