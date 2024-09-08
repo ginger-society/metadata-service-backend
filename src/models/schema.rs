@@ -25,7 +25,7 @@ pub mod schema {
             #[max_length = 10000]
             data ->Nullable<Varchar>,
             #[max_length = 500]
-            group_id ->Varchar,
+            group_id ->Nullable<Varchar>,
             #[max_length = 100]
             identifier ->Nullable<Varchar>,
             #[max_length = 100]
@@ -210,7 +210,7 @@ pub struct Dbschema {
     pub created_at:DateTime<Utc>,
     pub updated_at:DateTime<Utc>,
     pub data:Option<String>,
-    pub group_id:String,
+    pub group_id:Option<String>,
     pub identifier:Option<String>,
     pub organization_id:Option<String>,
     pub repo_origin:Option<String>,
@@ -349,7 +349,7 @@ pub struct DbschemaInsertable {
     pub created_at:DateTime<Utc>,
     pub updated_at:DateTime<Utc>,
     pub data:Option<String>,
-    pub group_id:String,
+    pub group_id:Option<String>,
     pub identifier:Option<String>,
     pub organization_id:Option<String>,
     pub repo_origin:Option<String>,

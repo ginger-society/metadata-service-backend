@@ -113,69 +113,57 @@ pub async fn create_dbschema(
 
     let group_uuid = Uuid::new_v4().to_string();
 
-    match identity_create_group(
-        &iam_service_config.0,
-        IdentityCreateGroupParams {
-            create_group_request: CreateGroupRequest::new(group_uuid.clone()),
-        },
-    )
-    .await
-    {
-        Ok(response) => {
-            let dbschema_uuid = Uuid::new_v4().to_string();
+    let dbschema_uuid = Uuid::new_v4().to_string();
 
-            let new_dbschema = DbschemaInsertable {
-                name: create_request.name.clone(),
-                description: create_request.description.clone(),
-                created_at: Utc::now(),
-                updated_at: Utc::now(),
-                data: create_request.data.clone(),
-                group_id: response.identifier,
-                identifier: Some(dbschema_uuid),
-                organization_id: Some(create_request.organisation_id.clone()),
-                repo_origin: None,
-                db_type: create_request.db_type.clone(),
-            };
+    let new_dbschema = DbschemaInsertable {
+        name: create_request.name.clone(),
+        description: create_request.description.clone(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+        data: create_request.data.clone(),
+        group_id: None,
+        identifier: Some(dbschema_uuid),
+        organization_id: Some(create_request.organisation_id.clone()),
+        repo_origin: None,
+        db_type: create_request.db_type.clone(),
+    };
 
-            let created_dbschema: Dbschema = diesel::insert_into(dbschema)
-                .values(&new_dbschema)
-                .get_result::<Dbschema>(&mut conn)
-                .map_err(|_| {
-                    status::Custom(
-                        Status::InternalServerError,
-                        "Error inserting new dbschema".to_string(),
-                    )
-                })?;
+    let created_dbschema: Dbschema = diesel::insert_into(dbschema)
+        .values(&new_dbschema)
+        .get_result::<Dbschema>(&mut conn)
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error inserting new dbschema".to_string(),
+            )
+        })?;
 
-            // Insert new branch with name "main"
-            let new_branch = Dbschema_BranchInsertable {
-                data: None,
-                branch_name: "stage".to_string(),
-                created_at: Utc::now(),
-                updated_at: Utc::now(),
-                parent_id: created_dbschema.id,
-                version: Some("0.0.0".to_string()),
-                pipeline_status: None,
-            };
+    // Insert new branch with name "main"
+    let new_branch = Dbschema_BranchInsertable {
+        data: None,
+        branch_name: "stage".to_string(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+        parent_id: created_dbschema.id,
+        version: Some("0.0.0".to_string()),
+        pipeline_status: None,
+    };
 
-            diesel::insert_into(dbschema_branch)
-                .values(&new_branch)
-                .execute(&mut conn)
-                .map_err(|_| {
-                    status::Custom(
-                        Status::InternalServerError,
-                        "Error inserting new branch".to_string(),
-                    )
-                })
-                .map(|created_branch| {
-                    status::Created::new("/dbschema").body(Json(CreateDbschemaResponse {
-                        message: "Dbschema created successfully".to_string(),
-                        id: created_dbschema.id,
-                    }))
-                })
-        }
-        Err(_) => todo!(),
-    }
+    diesel::insert_into(dbschema_branch)
+        .values(&new_branch)
+        .execute(&mut conn)
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error inserting new branch".to_string(),
+            )
+        })
+        .map(|created_branch| {
+            status::Created::new("/dbschema").body(Json(CreateDbschemaResponse {
+                message: "Dbschema created successfully".to_string(),
+                id: created_dbschema.id,
+            }))
+        })
 }
 
 #[openapi()]
@@ -240,6 +228,7 @@ pub fn update_dbschema(
     schema_id: String,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     update_request: Json<UpdateDbschemaRequest>,
+    _claims: APIClaims,
 ) -> Result<Json<Dbschema>, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl::*;
 
