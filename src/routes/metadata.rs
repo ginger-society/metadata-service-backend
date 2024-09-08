@@ -37,6 +37,7 @@ pub struct CreateDbschemaRequest {
 pub struct CreateDbschemaResponse {
     pub message: String,
     pub id: i64,
+    pub identifier: String,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -162,6 +163,7 @@ pub async fn create_dbschema(
             status::Created::new("/dbschema").body(Json(CreateDbschemaResponse {
                 message: "Dbschema created successfully".to_string(),
                 id: created_dbschema.id,
+                identifier: created_dbschema.identifier.unwrap(),
             }))
         })
 }
