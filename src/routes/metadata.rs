@@ -1351,7 +1351,6 @@ pub async fn get_user_packages(
 #[get("/dbschemas-and-tables/<org_id>/<env>")]
 pub fn get_dbschemas_and_tables(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
-    groups: GroupMemberships,
     env: String,
     org_id: String,
     _claims: Claims,
@@ -1367,12 +1366,7 @@ pub fn get_dbschemas_and_tables(
         )
     })?;
 
-    let memberships: Vec<String> = groups.0;
-
-    let query = dbschema
-        .filter(organization_id.eq(org_id))
-        .filter(group_id.eq_any(memberships))
-        .into_boxed();
+    let query = dbschema.filter(organization_id.eq(org_id)).into_boxed();
 
     let results = query.load::<Dbschema>(&mut conn).map_err(|_| {
         status::Custom(
