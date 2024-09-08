@@ -288,7 +288,7 @@ pub fn get_dbschema_by_id(
     schema_id: String,
     branch: Option<String>,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
-    _claims: Claims,
+    _claims: APIClaims,
 ) -> Result<Json<GetDbschemaByIdResponse>, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl::*;
     use crate::models::schema::schema::dbschema_branch::dsl::*;
@@ -353,7 +353,7 @@ pub fn get_dbschema_by_id_userland(
     schema_id: String,
     branch: Option<String>,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
-    _claims: APIClaims,
+    _claims: Claims,
 ) -> Result<Json<GetDbschemaByIdResponse>, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl::*;
     use crate::models::schema::schema::dbschema_branch::dsl::*;
