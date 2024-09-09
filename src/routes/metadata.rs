@@ -270,9 +270,19 @@ pub fn update_dbschema(
         ));
     }
 
+    let updated_dbschema = dbschema
+        .filter(identifier.eq(schema_id))
+        .first::<Dbschema>(&mut conn)
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving updated dbschema".to_string(),
+            )
+        })?;
+
     diesel::update(
         dbschema_branch_dsl::dbschema_branch
-            .filter(dbschema_branch_dsl::parent_id.eq(schema_id.clone()))
+            .filter(dbschema_branch_dsl::parent_id.eq(updated_dbschema.id))
             .filter(dbschema_branch_dsl::branch_name.eq(&branch_name)),
     )
     .set(dbschema_branch_dsl::version.eq(update_request.version.clone()))
@@ -283,16 +293,6 @@ pub fn update_dbschema(
             "Failed to update schema version".to_string(),
         )
     })?;
-
-    let updated_dbschema = dbschema
-        .filter(identifier.eq(schema_id))
-        .first::<Dbschema>(&mut conn)
-        .map_err(|_| {
-            status::Custom(
-                Status::InternalServerError,
-                "Error retrieving updated dbschema".to_string(),
-            )
-        })?;
 
     Ok(Json(updated_dbschema))
 }
