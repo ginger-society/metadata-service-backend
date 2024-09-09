@@ -1969,7 +1969,7 @@ pub fn update_db_pipeline(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     update_db_pipeline_request: Json<UpdateDbPipelineRequest>,
     _claims: APIClaims,
-) -> Result<Json<Dbschema>, status::Custom<String>> {
+) -> Result<String, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl::*;
     use crate::models::schema::schema::dbschema_branch::dsl as dbschema_branch_dsl;
 
@@ -2005,5 +2005,5 @@ pub fn update_db_pipeline(
         )
     })?;
 
-    Ok(Json(updated_dbschema))
+    Ok("Updated successfully".to_string())
 }
