@@ -5,9 +5,7 @@ services:
     container_name: rocket
     network_mode: "host"
     ipc: "host"
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
+    image: gingersociety/rust-rocket-api-dev:latest
     command: /bin/sh -c "while sleep 1000; do :; done"
     volumes:
       - ./:/app

@@ -21,3 +21,4 @@ Cargo.lock
 config.toml
 IAMService_client
 .DS_Store
+openapitools.json
