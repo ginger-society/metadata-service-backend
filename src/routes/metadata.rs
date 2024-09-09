@@ -88,6 +88,11 @@ pub struct UpdateDbschemaRequest {
     pub version: String,
 }
 
+#[derive(Deserialize, JsonSchema, Serialize)]
+pub struct UpdateDbPipelineRequest {
+    pub status: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct CreateDbschemaBranchRequest {
     pub branch_name: String,
@@ -1950,4 +1955,55 @@ pub async fn get_package_version_plain_text(
 
     // Return the version as plain text
     Ok(version_result)
+}
+
+#[openapi()]
+#[put(
+    "/update-db-pipeline/<org_id>/<schema_name>/<branch_name>",
+    data = "<update_db_pipeline_request>"
+)]
+pub fn update_db_pipeline(
+    org_id: String,
+    schema_name: String,
+    branch_name: String,
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    update_db_pipeline_request: Json<UpdateDbPipelineRequest>,
+    _claims: APIClaims,
+) -> Result<Json<Dbschema>, status::Custom<String>> {
+    use crate::models::schema::schema::dbschema::dsl::*;
+    use crate::models::schema::schema::dbschema_branch::dsl as dbschema_branch_dsl;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let updated_dbschema = dbschema
+        .filter(name.eq(schema_name.clone()))
+        .filter(organization_id.eq(org_id.clone()))
+        .first::<Dbschema>(&mut conn)
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving updated dbschema".to_string(),
+            )
+        })?;
+
+    diesel::update(
+        dbschema_branch_dsl::dbschema_branch
+            .filter(dbschema_branch_dsl::parent_id.eq(updated_dbschema.id))
+            .filter(dbschema_branch_dsl::branch_name.eq(&branch_name)),
+    )
+    .set(dbschema_branch_dsl::pipeline_status.eq(update_db_pipeline_request.status.clone()))
+    .execute(&mut conn)
+    .map_err(|_| {
+        status::Custom(
+            Status::InternalServerError,
+            "Failed to update schema pipeline".to_string(),
+        )
+    })?;
+
+    Ok(Json(updated_dbschema))
 }
