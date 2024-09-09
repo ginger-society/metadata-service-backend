@@ -31,6 +31,8 @@ pub struct CreateDbschemaRequest {
     pub data: Option<String>,
     pub organisation_id: String,
     pub db_type: String,
+    pub repo_origin: String,
+    pub version: String,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -82,6 +84,8 @@ pub struct UpdateDbschemaRequest {
     pub name: String,
     pub description: Option<String>,
     pub organisation_id: String,
+    pub repo_origin: String,
+    pub version: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -126,7 +130,7 @@ pub async fn create_dbschema(
         group_id: None,
         identifier: Some(dbschema_uuid),
         organization_id: Some(create_request.organisation_id.clone()),
-        repo_origin: None,
+        repo_origin: Some(create_request.repo_origin.clone()),
         db_type: create_request.db_type.clone(),
     };
 
@@ -147,7 +151,7 @@ pub async fn create_dbschema(
         created_at: Utc::now(),
         updated_at: Utc::now(),
         parent_id: created_dbschema.id,
-        version: Some("0.0.0".to_string()),
+        version: Some(create_request.version.clone()),
         pipeline_status: None,
     };
 
@@ -226,14 +230,16 @@ pub fn get_dbschemas(
 }
 
 #[openapi()]
-#[put("/dbschema/<schema_id>", data = "<update_request>")]
+#[put("/dbschema/<schema_id>/<branch_name>", data = "<update_request>")]
 pub fn update_dbschema(
     schema_id: String,
+    branch_name: String,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     update_request: Json<UpdateDbschemaRequest>,
     _claims: APIClaims,
 ) -> Result<Json<Dbschema>, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl::*;
+    use crate::models::schema::schema::dbschema_branch::dsl as dbschema_branch_dsl;
 
     let mut conn = rdb.get().map_err(|_| {
         status::Custom(
@@ -246,6 +252,7 @@ pub fn update_dbschema(
         .set((
             name.eq(update_request.name.clone()),
             description.eq(update_request.description.clone()),
+            repo_origin.eq(update_request.repo_origin.clone()),
             organization_id.eq(update_request.organisation_id.clone()),
         ))
         .execute(&mut conn)
@@ -262,6 +269,20 @@ pub fn update_dbschema(
             "Dbschema not found".to_string(),
         ));
     }
+
+    diesel::update(
+        dbschema_branch_dsl::dbschema_branch
+            .filter(dbschema_branch_dsl::parent_id.eq(schema_id.clone()))
+            .filter(dbschema_branch_dsl::branch_name.eq(&branch_name)),
+    )
+    .set(dbschema_branch_dsl::version.eq(update_request.version.clone()))
+    .execute(&mut conn)
+    .map_err(|_| {
+        status::Custom(
+            Status::InternalServerError,
+            "Failed to update schema version".to_string(),
+        )
+    })?;
 
     let updated_dbschema = dbschema
         .filter(identifier.eq(schema_id))
