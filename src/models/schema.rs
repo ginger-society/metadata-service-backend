@@ -75,7 +75,7 @@ pub mod schema {
             #[max_length = 50]
             identifier ->Varchar,
             #[max_length = 100]
-            group_id ->Varchar,
+            group_id ->Nullable<Varchar>,
             #[max_length = 100]
             db_schema_id ->Nullable<Varchar>,
             #[max_length = 1000]
@@ -259,7 +259,7 @@ pub struct Templates {
 #[diesel(table_name = service)]
 pub struct Service {
     pub identifier:String,
-    pub group_id:String,
+    pub group_id:Option<String>,
     pub db_schema_id:Option<String>,
     pub tables_json:Option<String>,
     pub dependencies_json:Option<String>,
@@ -396,7 +396,7 @@ pub struct TemplatesInsertable {
 #[diesel(table_name = service)]
 pub struct ServiceInsertable {
     pub identifier:String,
-    pub group_id:String,
+    pub group_id:Option<String>,
     pub db_schema_id:Option<String>,
     pub tables_json:Option<String>,
     pub dependencies_json:Option<String>,

@@ -670,25 +670,9 @@ pub async fn update_or_create_service(
 
         s.id
     } else {
-        // Create a new group in IAM service
-        let group_uuid = Uuid::new_v4().to_string();
-
-        let group_response = identity_create_group(
-            &iam_service_config.0,
-            IdentityCreateGroupParams {
-                create_group_request: CreateGroupRequest::new(group_uuid.clone()),
-            },
-        )
-        .await
-        .map_err(|e| {
-            println!("{:?}", e);
-            status::Custom(Status::InternalServerError, e.to_string())
-        })?;
-
-        // Create a new service
         let new_service = ServiceInsertable {
             identifier: service_identifier.clone(),
-            group_id: group_response.identifier, // Use the group_id from IAM service response
+            group_id: None, // Use the group_id from IAM service response
             db_schema_id: service_request.db_schema_id.clone(),
             service_type: service_request
                 .service_type
@@ -1082,7 +1066,7 @@ pub fn get_service_and_env_by_id_user_land(
 pub struct ServiceResponse {
     pub id: i64,
     pub identifier: String,
-    pub group_id: String,
+    pub group_id: Option<String>,
     pub db_schema_id: String,
     pub dependencies: Vec<String>,
     pub tables: Vec<String>,
