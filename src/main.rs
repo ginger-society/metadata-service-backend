@@ -61,7 +61,11 @@ fn rocket() -> Rocket<Build> {
                 metadata::get_service_and_env_by_id_user_land,
                 metadata::get_current_workspace,
                 metadata::get_package_version_plain_text,
-                metadata::update_db_pipeline
+                metadata::update_db_pipeline,
+                metadata::get_services_and_envs_public,
+                metadata::get_workspace_public,
+                metadata::get_dbschemas_and_tables_public,
+                metadata::get_user_packages_public
             ],
         )
         .mount(

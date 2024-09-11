@@ -871,6 +871,79 @@ pub fn get_services_and_envs_user_land(
 }
 
 #[openapi]
+#[get("/public/services-and-envs/<org_id>?<page_number>&<page_size>")]
+pub fn get_services_and_envs_public(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    org_id: String,
+    page_number: Option<String>,
+    page_size: Option<String>,
+) -> Result<Json<Vec<ServicesTrimmedResponse>>, rocket::http::Status> {
+    use crate::models::schema::schema::service::dsl::*;
+    use crate::models::schema::schema::service_envs::dsl::*;
+
+    let mut conn = rdb
+        .get()
+        .map_err(|_| rocket::http::Status::ServiceUnavailable)?;
+
+    let page_number = page_number
+        .as_deref()
+        .unwrap_or("1")
+        .parse::<i64>()
+        .unwrap_or(1);
+    let page_size = page_size
+        .as_deref()
+        .unwrap_or("10")
+        .parse::<i64>()
+        .unwrap_or(10);
+
+    let offset = (page_number - 1) * page_size;
+
+    // Query services and their associated environments for the user's groups
+    let services_with_envs = service
+        .filter(organization_id.eq(org_id))
+        .offset(offset)
+        .limit(page_size)
+        .load::<Service>(&mut conn)
+        .map_err(|_| rocket::http::Status::InternalServerError)?
+        .into_iter()
+        .map(|s| {
+            let envs = service_envs
+                .filter(parent_id.eq(s.id))
+                .load::<Service_Envs>(&mut conn)
+                .map_err(|_| rocket::http::Status::InternalServerError)?;
+
+            let env_responses: Vec<ServicesEnvTrimmedResponse> = envs
+                .into_iter()
+                .map(|e| ServicesEnvTrimmedResponse {
+                    env_key: e.env,
+                    base_url: e.base_url,
+                    updated_at: e.updated_at,
+                    version: Some(e.version),
+                    pipeline_status: e.pipeline_status,
+                })
+                .collect();
+
+            // Transform `Service` into `ServicesResponse`
+            Ok(ServicesTrimmedResponse {
+                identifier: s.identifier,
+                envs: env_responses,
+                tables: serde_json::from_str(&s.tables_json.unwrap()).unwrap(),
+                dependencies: serde_json::from_str(&s.dependencies_json.unwrap()).unwrap(),
+                db_schema_id: s.db_schema_id,
+                cache_schema_id: s.cache_schema_id,
+                service_type: Some(s.service_type),
+                lang: s.lang,
+                organization_id: s.organization_id.unwrap_or(String::from("")),
+                description: s.description.unwrap_or(String::from("")),
+                repo_origin: s.repo_origin,
+            })
+        })
+        .collect::<Result<Vec<ServicesTrimmedResponse>, rocket::http::Status>>()?;
+
+    Ok(Json(services_with_envs))
+}
+
+#[openapi]
 #[get("/services-and-envs/<org_id>?<page_number>&<page_size>")]
 pub fn get_services_and_envs(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
@@ -1346,12 +1419,143 @@ pub async fn get_user_packages(
 }
 
 #[openapi()]
+#[get("/public/packages/<org_id>/<env>")]
+pub async fn get_user_packages_public(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    env: String,
+    org_id: String,
+) -> Result<Json<Vec<PackageResponse>>, status::Custom<String>> {
+    use crate::models::schema::schema::package::dsl::*;
+    use crate::models::schema::schema::package_env::dsl as package_env_dsl;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    // Get all packages associated with those group_ids
+    let results = package
+        .inner_join(package_env_dsl::package_env.on(package_env_dsl::parent_id.eq(id)))
+        .filter(package_env_dsl::env.eq(env))
+        .filter(organization_id.eq(org_id))
+        .select((
+            package::all_columns(),
+            package_env_dsl::version,
+            package_env_dsl::pipeline_status,
+        ))
+        .load::<(Package, String, Option<String>)>(&mut conn)
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving packages".to_string(),
+            )
+        })?;
+
+    let package_responses: Vec<PackageResponse> = results
+        .into_iter()
+        .map(|(p, version, pipeline_status)| PackageResponse {
+            identifier: p.identifier,
+            package_type: p.package_type,
+            lang: p.lang,
+            updated_at: p.updated_at,
+            description: p.description.unwrap_or(String::from("")),
+            organization_id: p.organization_id.unwrap_or(String::from("")),
+            dependencies: serde_json::from_str(&p.dependencies_json.unwrap_or(String::from("[]")))
+                .unwrap(),
+            version, // Include the version from the package_env table
+            pipeline_status,
+            repo_origin: p.repo_origin,
+        })
+        .collect();
+
+    Ok(Json(package_responses))
+}
+
+#[openapi()]
 #[get("/dbschemas-and-tables/<org_id>/<env>")]
 pub fn get_dbschemas_and_tables(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     env: String,
     org_id: String,
     _claims: Claims,
+) -> Result<Json<Vec<GetDbschemaAndTablesResponse>>, status::Custom<String>> {
+    use crate::models::schema::schema::dbschema::dsl::*;
+    use crate::models::schema::schema::dbschema_branch::dsl::*;
+    use serde_json::Value;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let query = dbschema.filter(organization_id.eq(org_id)).into_boxed();
+
+    let results = query.load::<Dbschema>(&mut conn).map_err(|_| {
+        status::Custom(
+            Status::InternalServerError,
+            "Error retrieving dbschemas".to_string(),
+        )
+    })?;
+
+    let response = results
+        .into_iter()
+        .map(|db_schema_| {
+            // Attempt to get the main branch data
+            let branch = dbschema_branch
+                .filter(parent_id.eq(db_schema_.id).and(branch_name.eq(env.clone())))
+                .first::<Dbschema_Branch>(&mut conn)
+                .ok();
+
+            let branch_data = branch.clone().unwrap().data;
+
+            // Use the main branch data if available, otherwise fallback to the db_schema_ data
+            let data_to_use = branch_data.as_deref().or(db_schema_.data.as_deref());
+
+            let tables: Vec<String> = match data_to_use {
+                Some(data_str) => match serde_json::from_str::<Value>(data_str) {
+                    Ok(Value::Array(array)) => array
+                        .into_iter()
+                        .filter_map(|element| {
+                            element
+                                .get("data")
+                                .and_then(|d| d.get("name"))
+                                .and_then(|n| n.as_str().map(|s| s.to_string()))
+                        })
+                        .collect(),
+                    _ => Vec::new(),
+                },
+                None => Vec::new(),
+            };
+
+            GetDbschemaAndTablesResponse {
+                id: db_schema_.id,
+                name: db_schema_.name,
+                description: db_schema_.description,
+                version: branch.clone().unwrap().version,
+                updated_at: db_schema_.updated_at,
+                identifier: db_schema_.identifier,
+                organization_id: db_schema_.organization_id.unwrap(),
+                tables,
+                pipeline_status: branch.clone().unwrap().pipeline_status,
+                repo_origin: db_schema_.repo_origin,
+                db_type: Some(db_schema_.db_type),
+            }
+        })
+        .collect();
+
+    Ok(Json(response))
+}
+
+#[openapi()]
+#[get("/public/dbschemas-and-tables/<org_id>/<env>")]
+pub fn get_dbschemas_and_tables_public(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    env: String,
+    org_id: String,
 ) -> Result<Json<Vec<GetDbschemaAndTablesResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl::*;
     use crate::models::schema::schema::dbschema_branch::dsl::*;
@@ -1820,6 +2024,49 @@ pub async fn get_workspace(
         ))
     }
 }
+
+#[openapi()]
+#[get("/public/get-workspace/<org_id>")]
+pub async fn get_workspace_public(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    org_id: String,
+) -> Result<Json<WorkspaceDetail>, status::Custom<String>> {
+    use crate::models::schema::schema::organization::dsl::*;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let workspace = organization
+        .filter(slug.eq(org_id))
+        .select((name, blocks_positions, is_active, group_id))
+        .first::<(Option<String>, Option<String>, bool, String)>(&mut conn)
+        .optional()
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving workspace".to_string(),
+            )
+        })?;
+
+    if let Some((_name, _block_positions, _is_active, _group_id)) = workspace {
+        Ok(Json(WorkspaceDetail {
+            name: _name,
+            block_positions: _block_positions,
+            is_active: _is_active,
+            is_admin: false,
+        }))
+    } else {
+        Err(status::Custom(
+            Status::NotFound,
+            "Workspace not found".to_string(),
+        ))
+    }
+}
+
 #[openapi()]
 #[get("/get-workspace-details/<org_id>")]
 pub async fn get_workspace_details(
