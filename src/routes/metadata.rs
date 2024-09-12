@@ -6,7 +6,7 @@ use crate::middlewares::IAMService_config::IAMService_config;
 use crate::models::schema::{
     Dbschema, DbschemaInsertable, Dbschema_Branch, Dbschema_BranchInsertable, Package,
     PackageInsertable, Package_Env, Package_EnvInsertable, Service, ServiceInsertable,
-    Service_Envs, Service_EnvsInsertable,
+    Service_Envs, Service_EnvsInsertable, Templates,
 };
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
@@ -2337,4 +2337,24 @@ pub fn update_db_pipeline(
     })?;
 
     Ok(Json(updated_dbschema))
+}
+
+#[openapi]
+#[get("/templates")]
+pub fn get_all_templates(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    claims: APIClaims,
+) -> Result<Json<Vec<Templates>>, rocket::http::Status> {
+    use crate::models::schema::schema::templates::dsl::*;
+
+    let mut conn = rdb
+        .get()
+        .map_err(|_| rocket::http::Status::ServiceUnavailable)?;
+
+    // Query all templates
+    let template_list = templates
+        .load::<Templates>(&mut conn)
+        .map_err(|_| rocket::http::Status::InternalServerError)?;
+
+    Ok(Json(template_list))
 }
