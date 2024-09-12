@@ -1,10 +1,8 @@
 use crate::middlewares::api_jwt::APIClaims;
 use crate::middlewares::groups::GroupMemberships;
-use crate::middlewares::groups_owned;
 use crate::middlewares::groups_owned::GroupOwnerships;
 use crate::middlewares::jwt::Claims;
 use crate::middlewares::IAMService_config::IAMService_config;
-use crate::models::schema::schema::dbschema::organization_id;
 use crate::models::schema::{
     Dbschema, DbschemaInsertable, Dbschema_Branch, Dbschema_BranchInsertable, Package,
     PackageInsertable, Package_Env, Package_EnvInsertable, Service, ServiceInsertable,
@@ -21,7 +19,6 @@ use rocket_okapi::openapi;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use winnow::Parser;
 use IAMService::apis::default_api::{identity_create_group, IdentityCreateGroupParams};
 use IAMService::models::CreateGroupRequest;
 #[derive(Deserialize, Serialize, JsonSchema)]
@@ -1939,6 +1936,7 @@ pub async fn create_organization(
                 name: Some(create_request.name.clone()),
                 is_active: true,
                 blocks_positions: None,
+                is_public: false,
             };
 
             let created_organization: Organization = diesel::insert_into(organization)
