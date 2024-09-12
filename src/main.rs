@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate rocket;
-use fairings::auth::AuthFairing;
 use rocket::Rocket;
-use rocket_okapi::settings::UrlObject;
 
 use crate::routes::metadata;
 use db::redis::create_redis_pool;
@@ -12,8 +10,6 @@ use rocket_okapi::openapi_get_routes;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 use rocket_prometheus::PrometheusMetrics;
 use std::env;
-use std::process::{exit, Command};
-use std::sync::atomic::AtomicUsize;
 mod db;
 mod errors;
 mod fairings;
@@ -30,7 +26,6 @@ fn rocket() -> Rocket<Build> {
         .manage(db::connect_rdb())
         .attach(fairings::cors::CORS)
         .attach(prometheus.clone())
-        .attach(AuthFairing)
         .mount(
             "/metadata/",
             openapi_get_routes![
