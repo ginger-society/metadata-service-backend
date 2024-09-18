@@ -1,11 +1,11 @@
 [schema]
-branch = "stage"
-cache_schema_id = "a3f5e631-8225-4ac5-85b9-71ecd107bb6c"
+url = "http://localhost:8001"
 lang = "Rust"
 orm = "Diesel"
 root = "src/models"
 schema_id = "66bbad42-200f-4b2f-ba0d-9feb1f3edbfa"
-url = "http://localhost:8001"
+cache_schema_id = "a3f5e631-8225-4ac5-85b9-71ecd107bb6c"
+branch = "stage"
 
 [tables]
 names = ["dbschema", "dbschema_branch", "templates", "service", "service_envs", "package", "package_env", "organization"]
