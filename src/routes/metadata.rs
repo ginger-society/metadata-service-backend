@@ -134,6 +134,7 @@ pub async fn create_dbschema(
         organization_id: Some(create_request.organisation_id.clone()),
         repo_origin: Some(create_request.repo_origin.clone()),
         db_type: create_request.db_type.clone(),
+        quick_links: None,
     };
 
     let created_dbschema: Dbschema = diesel::insert_into(dbschema)
@@ -661,6 +662,7 @@ pub struct UpdateServiceRequest {
     pub description: String,
     pub organization_id: String,
     pub repo_origin: Option<String>,
+    pub quick_links: Option<String>,
 }
 
 #[derive(Debug, Serialize, JsonSchema)]
@@ -719,6 +721,7 @@ pub async fn update_or_create_service(
                     serde_json::to_string(&service_request.tables).unwrap(),
                 )),
                 repo_origin.eq(&service_request.repo_origin),
+                quick_links.eq(&service_request.quick_links),
                 cache_schema_id.eq(&service_request.cache_schema_id),
             ))
             .execute(&mut conn)
@@ -746,6 +749,7 @@ pub async fn update_or_create_service(
             description: Some(service_request.description.clone()),
             repo_origin: service_request.repo_origin.clone(),
             cache_schema_id: service_request.cache_schema_id.clone(),
+            quick_links: service_request.quick_links.clone(),
         };
 
         diesel::insert_into(service)
@@ -1303,6 +1307,7 @@ pub struct CreateOrUpdatePackageRequest {
     pub dependencies: Vec<String>,
     pub env: String,
     pub repo_origin: Option<String>,
+    pub quick_links: Option<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -1355,6 +1360,7 @@ pub async fn create_or_update_package(
                 )),
                 description.eq(&package_request.description),
                 repo_origin.eq(&package_request.repo_origin),
+                quick_links.eq(&package_request.quick_links),
             ))
             .execute(&mut conn)
             .map_err(|_| {
@@ -1377,6 +1383,7 @@ pub async fn create_or_update_package(
             organization_id: Some(package_request.organization_id.clone()),
             dependencies_json: Some(serde_json::to_string(&package_request.dependencies).unwrap()),
             repo_origin: package_request.repo_origin.clone(),
+            quick_links: package_request.quick_links.clone(),
         };
 
         diesel::insert_into(package)

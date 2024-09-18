@@ -33,6 +33,8 @@ pub mod schema {
             #[max_length = 200]
             repo_origin ->Nullable<Varchar>,
             db_type ->Varchar,
+            #[max_length = 10000]
+            quick_links ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -93,6 +95,8 @@ pub mod schema {
             repo_origin ->Nullable<Varchar>,
             #[max_length = 250]
             cache_schema_id ->Nullable<Varchar>,
+            #[max_length = 10000]
+            quick_links ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -134,6 +138,8 @@ pub mod schema {
             dependencies_json ->Nullable<Varchar>,
             #[max_length = 200]
             repo_origin ->Nullable<Varchar>,
+            #[max_length = 10000]
+            quick_links ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -218,6 +224,7 @@ pub struct Dbschema {
     pub organization_id:Option<String>,
     pub repo_origin:Option<String>,
     pub db_type:String,
+    pub quick_links:Option<String>,
     pub id:i64,
     
 }
@@ -270,6 +277,7 @@ pub struct Service {
     pub organization_id:Option<String>,
     pub repo_origin:Option<String>,
     pub cache_schema_id:Option<String>,
+    pub quick_links:Option<String>,
     pub id:i64,
     
 }
@@ -307,6 +315,7 @@ pub struct Package {
     pub description:Option<String>,
     pub dependencies_json:Option<String>,
     pub repo_origin:Option<String>,
+    pub quick_links:Option<String>,
     pub id:i64,
     
 }
@@ -359,6 +368,7 @@ pub struct DbschemaInsertable {
     pub organization_id:Option<String>,
     pub repo_origin:Option<String>,
     pub db_type:String,
+    pub quick_links:Option<String>,
     
 }
 
@@ -408,6 +418,7 @@ pub struct ServiceInsertable {
     pub organization_id:Option<String>,
     pub repo_origin:Option<String>,
     pub cache_schema_id:Option<String>,
+    pub quick_links:Option<String>,
     
 }
 
@@ -443,6 +454,7 @@ pub struct PackageInsertable {
     pub description:Option<String>,
     pub dependencies_json:Option<String>,
     pub repo_origin:Option<String>,
+    pub quick_links:Option<String>,
     
 }
 
