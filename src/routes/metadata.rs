@@ -859,6 +859,7 @@ pub struct ServicesTrimmedResponse {
     pub description: String,
     pub organization_id: String,
     pub repo_origin: Option<String>,
+    pub quick_links: Option<String>,
 }
 
 #[openapi]
@@ -928,6 +929,7 @@ pub fn get_services_and_envs_user_land(
                 organization_id: s.organization_id.unwrap_or(String::from("")),
                 description: s.description.unwrap_or(String::from("")),
                 repo_origin: s.repo_origin,
+                quick_links: s.quick_links,
             })
         })
         .collect::<Result<Vec<ServicesTrimmedResponse>, rocket::http::Status>>()?;
@@ -1001,6 +1003,7 @@ pub fn get_services_and_envs_public(
                 organization_id: s.organization_id.unwrap_or(String::from("")),
                 description: s.description.unwrap_or(String::from("")),
                 repo_origin: s.repo_origin,
+                quick_links: s.quick_links,
             })
         })
         .collect::<Result<Vec<ServicesTrimmedResponse>, rocket::http::Status>>()?;
@@ -1075,6 +1078,7 @@ pub fn get_services_and_envs(
                 organization_id: s.organization_id.unwrap_or(String::from("")),
                 description: s.description.unwrap_or(String::from("")),
                 repo_origin: s.repo_origin,
+                quick_links: s.quick_links,
             })
         })
         .collect::<Result<Vec<ServicesTrimmedResponse>, rocket::http::Status>>()?;
