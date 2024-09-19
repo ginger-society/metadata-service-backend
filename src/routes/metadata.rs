@@ -30,6 +30,7 @@ pub struct CreateDbschemaRequest {
     pub db_type: String,
     pub repo_origin: String,
     pub version: String,
+    pub quick_links: Option<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -83,6 +84,7 @@ pub struct UpdateDbschemaRequest {
     pub organisation_id: String,
     pub repo_origin: String,
     pub version: String,
+    pub quick_links: Option<String>,
 }
 
 #[derive(Deserialize, JsonSchema, Serialize)]
@@ -134,7 +136,7 @@ pub async fn create_dbschema(
         organization_id: Some(create_request.organisation_id.clone()),
         repo_origin: Some(create_request.repo_origin.clone()),
         db_type: create_request.db_type.clone(),
-        quick_links: None,
+        quick_links: create_request.quick_links.clone(),
     };
 
     let created_dbschema: Dbschema = diesel::insert_into(dbschema)
@@ -257,6 +259,7 @@ pub fn update_dbschema(
             description.eq(update_request.description.clone()),
             repo_origin.eq(update_request.repo_origin.clone()),
             organization_id.eq(update_request.organisation_id.clone()),
+            quick_links.eq(update_request.quick_links.clone()),
         ))
         .execute(&mut conn)
         .map_err(|_| {
