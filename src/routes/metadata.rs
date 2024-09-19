@@ -1474,6 +1474,7 @@ pub struct PackageResponse {
     pub dependencies: Vec<String>,
     pub pipeline_status: Option<String>,
     pub repo_origin: Option<String>,
+    pub quick_links: Option<String>,
 }
 
 #[openapi()]
@@ -1526,6 +1527,7 @@ pub async fn get_user_packages(
             version, // Include the version from the package_env table
             pipeline_status,
             repo_origin: p.repo_origin,
+            quick_links: p.quick_links,
         })
         .collect();
 
@@ -1581,6 +1583,7 @@ pub async fn get_user_packages_public(
             version, // Include the version from the package_env table
             pipeline_status,
             repo_origin: p.repo_origin,
+            quick_links: p.quick_links,
         })
         .collect();
 
