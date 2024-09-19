@@ -63,6 +63,7 @@ pub struct GetDbschemaAndTablesResponse {
     pub tables: Vec<String>,
     pub pipeline_status: Option<String>,
     pub repo_origin: Option<String>,
+    pub quick_links: Option<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
@@ -1656,6 +1657,7 @@ pub fn get_dbschemas_and_tables(
                 pipeline_status: branch.clone().unwrap().pipeline_status,
                 repo_origin: db_schema_.repo_origin,
                 db_type: Some(db_schema_.db_type),
+                quick_links: db_schema_.quick_links,
             }
         })
         .collect();
@@ -1732,6 +1734,7 @@ pub fn get_dbschemas_and_tables_public(
                 pipeline_status: branch.clone().unwrap().pipeline_status,
                 repo_origin: db_schema_.repo_origin,
                 db_type: Some(db_schema_.db_type),
+                quick_links: db_schema_.quick_links,
             }
         })
         .collect();
