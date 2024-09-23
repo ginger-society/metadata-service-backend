@@ -169,6 +169,21 @@ pub mod schema {
             #[max_length = 100]
             name ->Nullable<Varchar>,
             is_public ->Bool,
+            #[max_length = 200]
+            infra_repo_origin ->Nullable<Varchar>,
+            id ->BigInt,
+            
+        }
+    }
+    
+    table! {
+        snapshots (id) {
+            #[max_length = 50]
+            version ->Varchar,
+            created_at ->Timestamptz,
+            updated_at ->Timestamptz,
+            #[max_length = 100]
+            organization_id ->Varchar,
             id ->BigInt,
             
         }
@@ -191,6 +206,8 @@ pub mod schema {
     
         
     
+        
+    
 
     diesel::allow_tables_to_appear_in_same_query!(
         dbschema,
@@ -201,11 +218,12 @@ pub mod schema {
         package,
         package_env,
         organization,
+        snapshots,
         
     );
 }
 
-use schema::{ dbschema,dbschema_branch,templates,service,service_envs,package,package_env,organization, };
+use schema::{ dbschema,dbschema_branch,templates,service,service_envs,package,package_env,organization,snapshots, };
 
 
 
@@ -346,6 +364,21 @@ pub struct Organization {
     pub blocks_positions:Option<String>,
     pub name:Option<String>,
     pub is_public:bool,
+    pub infra_repo_origin:Option<String>,
+    pub id:i64,
+    
+}
+
+
+#[derive(Queryable, Debug, Clone, Selectable, Serialize, Deserialize, JsonSchema,Identifiable)]
+
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(table_name = snapshots)]
+pub struct Snapshots {
+    pub version:String,
+    pub created_at:DateTime<Utc>,
+    pub updated_at:DateTime<Utc>,
+    pub organization_id:String,
     pub id:i64,
     
 }
@@ -483,5 +516,19 @@ pub struct OrganizationInsertable {
     pub blocks_positions:Option<String>,
     pub name:Option<String>,
     pub is_public:bool,
+    pub infra_repo_origin:Option<String>,
+    
+}
+
+
+#[derive(Queryable, Debug, Clone, Selectable, Serialize, Deserialize, Insertable, JsonSchema)]
+
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(table_name = snapshots)]
+pub struct SnapshotsInsertable {
+    pub version:String,
+    pub created_at:DateTime<Utc>,
+    pub updated_at:DateTime<Utc>,
+    pub organization_id:String,
     
 }

@@ -8,4 +8,4 @@ cache_schema_id = "a3f5e631-8225-4ac5-85b9-71ecd107bb6c"
 branch = "stage"
 
 [tables]
-names = ["dbschema", "dbschema_branch", "templates", "service", "service_envs", "package", "package_env", "organization"]
+names = ["dbschema", "dbschema_branch", "templates", "service", "service_envs", "package", "package_env", "organization", "snapshots"]

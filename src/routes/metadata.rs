@@ -6,9 +6,9 @@ use crate::middlewares::IAMService_config::IAMService_config;
 use crate::models::schema::{
     Dbschema, DbschemaInsertable, Dbschema_Branch, Dbschema_BranchInsertable, Package,
     PackageInsertable, Package_Env, Package_EnvInsertable, Service, ServiceInsertable,
-    Service_Envs, Service_EnvsInsertable, Templates,
+    Service_Envs, Service_EnvsInsertable, Snapshots, SnapshotsInsertable, Templates,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use rocket::http::Status;
@@ -2092,6 +2092,7 @@ pub async fn create_organization(
                 is_active: true,
                 blocks_positions: None,
                 is_public: false,
+                infra_repo_origin: None,
             };
 
             let created_organization: Organization = diesel::insert_into(organization)
@@ -2181,6 +2182,7 @@ pub struct WorkspaceSummary {
     is_active: bool,
     is_admin: bool,
     group_id: String,
+    infra_repo_origin: Option<String>,
 }
 
 #[openapi()]
@@ -2206,8 +2208,8 @@ pub async fn get_workspaces(
 
     let workspaces: Vec<WorkspaceSummary> = organization
         .filter(group_id.eq_any(memberships))
-        .select((slug, name, is_active, group_id))
-        .load::<(String, Option<String>, bool, String)>(&mut conn)
+        .select((slug, name, is_active, group_id, infra_repo_origin))
+        .load::<(String, Option<String>, bool, String, Option<String>)>(&mut conn)
         .map_err(|_| {
             status::Custom(
                 Status::InternalServerError,
@@ -2215,13 +2217,16 @@ pub async fn get_workspaces(
             )
         })?
         .into_iter()
-        .map(|(_slug, _name, _is_active, _group_id)| WorkspaceSummary {
-            slug: _slug,
-            name: _name,
-            is_active: _is_active,
-            is_admin: ownerships.contains(&_group_id),
-            group_id: _group_id,
-        })
+        .map(
+            |(_slug, _name, _is_active, _group_id, _infra_repo_origin)| WorkspaceSummary {
+                slug: _slug,
+                name: _name,
+                is_active: _is_active,
+                is_admin: ownerships.contains(&_group_id),
+                group_id: _group_id,
+                infra_repo_origin: _infra_repo_origin,
+            },
+        )
         .collect();
 
     Ok(Json(workspaces))
@@ -2343,8 +2348,8 @@ pub async fn get_workspace_details(
     let workspace = organization
         .filter(slug.eq(&org_id))
         .filter(group_id.eq_any(&ownerships))
-        .select((slug, name, is_active, group_id))
-        .first::<(String, Option<String>, bool, String)>(&mut conn)
+        .select((slug, name, is_active, group_id, infra_repo_origin))
+        .first::<(String, Option<String>, bool, String, Option<String>)>(&mut conn)
         .optional()
         .map_err(|_| {
             status::Custom(
@@ -2354,13 +2359,16 @@ pub async fn get_workspace_details(
         })?;
 
     match workspace {
-        Some((_slug, _name, _is_active, _group_id)) => Ok(Json(WorkspaceSummary {
-            slug: _slug,
-            name: _name,
-            is_active: _is_active,
-            group_id: _group_id,
-            is_admin: true,
-        })),
+        Some((_slug, _name, _is_active, _group_id, _infra_repo_origin)) => {
+            Ok(Json(WorkspaceSummary {
+                slug: _slug,
+                name: _name,
+                is_active: _is_active,
+                group_id: _group_id,
+                is_admin: true,
+                infra_repo_origin: _infra_repo_origin,
+            }))
+        }
         None => Err(status::Custom(
             Status::NotFound,
             "Workspace not found".to_string(),
@@ -2512,4 +2520,76 @@ pub fn get_all_templates(
         .map_err(|_| rocket::http::Status::InternalServerError)?;
 
     Ok(Json(template_list))
+}
+
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct CreateSnapshotRequest {
+    pub version: String,
+    pub org_id: String,
+    pub infra_repo_origin: String,
+}
+
+#[openapi]
+#[post("/create-snapshot", data = "<create_snapshot_request>")]
+pub async fn create_snapshot(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    claims: APIClaims,
+    create_snapshot_request: Json<CreateSnapshotRequest>,
+) -> Result<Json<MessageResponse>, rocket::http::Status> {
+    use crate::models::schema::schema::snapshots::dsl::*;
+
+    let mut conn = rdb
+        .get()
+        .map_err(|_| rocket::http::Status::ServiceUnavailable)?;
+
+    let new_snapshot = SnapshotsInsertable {
+        version: create_snapshot_request.version.clone(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+        organization_id: create_snapshot_request.org_id.clone(),
+    };
+
+    diesel::insert_into(snapshots)
+        .values(&new_snapshot)
+        .execute(&mut conn)
+        .map_err(|_| rocket::http::Status::InternalServerError)?;
+
+    Ok(Json(MessageResponse {
+        message: "Snapshot record created".to_string(),
+    }))
+}
+
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct SnapshotsResponse {
+    pub version: String,
+    pub created_at: DateTime<Utc>,
+}
+
+#[openapi]
+#[get("/get-snapshots/<org_id>")]
+pub async fn get_snapshots(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    org_id: String,
+) -> Result<Json<Vec<SnapshotsResponse>>, rocket::http::Status> {
+    use crate::models::schema::schema::snapshots::dsl::*;
+
+    let mut conn = rdb
+        .get()
+        .map_err(|_| rocket::http::Status::ServiceUnavailable)?;
+
+    let db_snapshots = snapshots
+        .filter(organization_id.eq(org_id))
+        .load::<Snapshots>(&mut conn)
+        .map_err(|_| rocket::http::Status::InternalServerError)?;
+
+    // Map only the version and created_at fields
+    let response_snapshots: Vec<SnapshotsResponse> = db_snapshots
+        .into_iter()
+        .map(|snapshot| SnapshotsResponse {
+            version: snapshot.version,
+            created_at: snapshot.created_at,
+        })
+        .collect();
+
+    Ok(Json(response_snapshots))
 }
