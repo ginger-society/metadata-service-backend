@@ -1481,6 +1481,63 @@ pub struct PackageResponse {
 #[get("/packages/<org_id>/<env>")]
 pub async fn get_user_packages(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    _claims: APIClaims,
+    env: String,
+    org_id: String,
+) -> Result<Json<Vec<PackageResponse>>, status::Custom<String>> {
+    use crate::models::schema::schema::package::dsl::*;
+    use crate::models::schema::schema::package_env::dsl as package_env_dsl;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    // Get all packages associated with those group_ids
+    let results = package
+        .inner_join(package_env_dsl::package_env.on(package_env_dsl::parent_id.eq(id)))
+        .filter(package_env_dsl::env.eq(env))
+        .filter(organization_id.eq(org_id))
+        .select((
+            package::all_columns(),
+            package_env_dsl::version,
+            package_env_dsl::pipeline_status,
+        ))
+        .load::<(Package, String, Option<String>)>(&mut conn)
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Error retrieving packages".to_string(),
+            )
+        })?;
+
+    let package_responses: Vec<PackageResponse> = results
+        .into_iter()
+        .map(|(p, version, pipeline_status)| PackageResponse {
+            identifier: p.identifier,
+            package_type: p.package_type,
+            lang: p.lang,
+            updated_at: p.updated_at,
+            description: p.description.unwrap_or(String::from("")),
+            organization_id: p.organization_id.unwrap_or(String::from("")),
+            dependencies: serde_json::from_str(&p.dependencies_json.unwrap_or(String::from("[]")))
+                .unwrap(),
+            version, // Include the version from the package_env table
+            pipeline_status,
+            repo_origin: p.repo_origin,
+            quick_links: p.quick_links,
+        })
+        .collect();
+
+    Ok(Json(package_responses))
+}
+
+#[openapi()]
+#[get("/user-land/packages/<org_id>/<env>")]
+pub async fn get_user_packages_user_land(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     _claims: Claims,
     env: String,
     org_id: String,
@@ -1593,6 +1650,84 @@ pub async fn get_user_packages_public(
 #[openapi()]
 #[get("/dbschemas-and-tables/<org_id>/<env>")]
 pub fn get_dbschemas_and_tables(
+    rdb: &State<Pool<ConnectionManager<PgConnection>>>,
+    env: String,
+    org_id: String,
+    _claims: APIClaims,
+) -> Result<Json<Vec<GetDbschemaAndTablesResponse>>, status::Custom<String>> {
+    use crate::models::schema::schema::dbschema::dsl::*;
+    use crate::models::schema::schema::dbschema_branch::dsl::*;
+    use serde_json::Value;
+
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Failed to get DB connection".to_string(),
+        )
+    })?;
+
+    let query = dbschema.filter(organization_id.eq(org_id)).into_boxed();
+
+    let results = query.load::<Dbschema>(&mut conn).map_err(|_| {
+        status::Custom(
+            Status::InternalServerError,
+            "Error retrieving dbschemas".to_string(),
+        )
+    })?;
+
+    let response = results
+        .into_iter()
+        .map(|db_schema_| {
+            // Attempt to get the main branch data
+            let branch = dbschema_branch
+                .filter(parent_id.eq(db_schema_.id).and(branch_name.eq(env.clone())))
+                .first::<Dbschema_Branch>(&mut conn)
+                .ok();
+
+            let branch_data = branch.clone().unwrap().data;
+
+            // Use the main branch data if available, otherwise fallback to the db_schema_ data
+            let data_to_use = branch_data.as_deref().or(db_schema_.data.as_deref());
+
+            let tables: Vec<String> = match data_to_use {
+                Some(data_str) => match serde_json::from_str::<Value>(data_str) {
+                    Ok(Value::Array(array)) => array
+                        .into_iter()
+                        .filter_map(|element| {
+                            element
+                                .get("data")
+                                .and_then(|d| d.get("name"))
+                                .and_then(|n| n.as_str().map(|s| s.to_string()))
+                        })
+                        .collect(),
+                    _ => Vec::new(),
+                },
+                None => Vec::new(),
+            };
+
+            GetDbschemaAndTablesResponse {
+                id: db_schema_.id,
+                name: db_schema_.name,
+                description: db_schema_.description,
+                version: branch.clone().unwrap().version,
+                updated_at: db_schema_.updated_at,
+                identifier: db_schema_.identifier,
+                organization_id: db_schema_.organization_id.unwrap(),
+                tables,
+                pipeline_status: branch.clone().unwrap().pipeline_status,
+                repo_origin: db_schema_.repo_origin,
+                db_type: Some(db_schema_.db_type),
+                quick_links: db_schema_.quick_links,
+            }
+        })
+        .collect();
+
+    Ok(Json(response))
+}
+
+#[openapi()]
+#[get("/user-land/dbschemas-and-tables/<org_id>/<env>")]
+pub fn get_dbschemas_and_tables_user_land(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     env: String,
     org_id: String,
