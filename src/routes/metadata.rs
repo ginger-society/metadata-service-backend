@@ -2535,16 +2535,20 @@ pub async fn create_snapshot(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     claims: APIClaims,
     create_snapshot_request: Json<CreateSnapshotRequest>,
-) -> Result<Json<MessageResponse>, rocket::http::Status> {
+) -> Result<Json<MessageResponse>, status::Custom<String>> {
+    use crate::models::schema::schema::organization::dsl as org_dsl;
     use crate::models::schema::schema::snapshots::dsl::*;
 
-    let mut conn = rdb
-        .get()
-        .map_err(|_| rocket::http::Status::ServiceUnavailable)?;
+    let mut conn = rdb.get().map_err(|_| {
+        status::Custom(
+            Status::ServiceUnavailable,
+            "Database unavailable".to_string(),
+        )
+    })?;
 
     let new_snapshot = SnapshotsInsertable {
         version: create_snapshot_request.version.clone(),
-        created_at: Utc::now(),
+        created_at: Utc::now(), // Ensure NaiveDateTime is used
         updated_at: Utc::now(),
         organization_id: create_snapshot_request.org_id.clone(),
     };
@@ -2552,10 +2556,34 @@ pub async fn create_snapshot(
     diesel::insert_into(snapshots)
         .values(&new_snapshot)
         .execute(&mut conn)
-        .map_err(|_| rocket::http::Status::InternalServerError)?;
+        .map_err(|_| {
+            status::Custom(
+                Status::InternalServerError,
+                "Failed to create snapshot".to_string(),
+            )
+        })?;
+
+    let updated_rows = diesel::update(
+        org_dsl::organization.filter(org_dsl::slug.eq(create_snapshot_request.org_id.clone())),
+    )
+    .set(org_dsl::infra_repo_origin.eq(create_snapshot_request.infra_repo_origin.clone())) // Assuming this field is in your organization table
+    .execute(&mut conn)
+    .map_err(|_| {
+        status::Custom(
+            Status::InternalServerError,
+            "Failed to update organization".to_string(),
+        )
+    })?;
+
+    if updated_rows == 0 {
+        return Err(status::Custom(
+            Status::NotFound,
+            "Organization not found".to_string(),
+        ));
+    }
 
     Ok(Json(MessageResponse {
-        message: "Snapshot record created".to_string(),
+        message: "Snapshot record created and organization updated".to_string(),
     }))
 }
 
