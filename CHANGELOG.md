@@ -2,21 +2,6 @@
 chire:
  - [caec3c375a](https://github.com/ginger-society/metadata-service-backendcaec3c375a386b84f02d33a82a82d97f2ff8381b) (Ginger Society Admin) chire: minor indentation correction
 	
-fix:
- - [48ebd6363f](https://github.com/ginger-society/metadata-service-backend48ebd6363f293a3b3672cf34d128331614a4d19e) (Ginger Society Admin) fix: minor changes to provide default for the is public field
-	
- - [800fb5b384](https://github.com/ginger-society/metadata-service-backend800fb5b38439ce7a807cb561f5cb706abd3003a5) (Ginger Society Admin) fix: added update db pipeline endpoint
-	
- - [01e28ac418](https://github.com/ginger-society/metadata-service-backend01e28ac4183b966137f681366c219eadd34a1d60) (Ginger Society Admin) fix: build
-	
- - [8493324cf4](https://github.com/ginger-society/metadata-service-backend8493324cf420627429b5ceaf908a3728ab5d011e) (Ginger Society Admin) fix: revert the field name change
-	
- - [29b74a6dcd](https://github.com/ginger-society/metadata-service-backend29b74a6dcd148c5babd4d9eacb72e3386d0b7710) (Ginger Society Admin) fix: build
-	
- - [cfee7d3320](https://github.com/ginger-society/metadata-service-backendcfee7d332059bb2a266e3edc7b5bd639d4b3e2df) (Ginger Society Admin) fix: minor typo
-	
- - [bb5782ab9f](https://github.com/ginger-society/metadata-service-backendbb5782ab9f037b910007965bde024748f94907da) (Ginger Society Admin) fix: pipeline
-	
 feat:
  - [3523d4b435](https://github.com/ginger-society/metadata-service-backend3523d4b435ec446640a1c35a7ecdaeb6884d3dd0) (Ginger Society Admin) feat: updating infra repo with the create snapshot request
 	
@@ -89,9 +74,49 @@ feat:
  - [5bfa156667](https://github.com/ginger-society/metadata-service-backend5bfa1566671a8b5bf4f68a26f32e33ad10fd0bd1) (Ginger Society Admin) feat: added userland api for getting services and envs
 	
 chore:
+ - [6f7b826c4c](https://github.com/ginger-society/metadata-service-backend6f7b826c4c78cad9cd4f5edd6f74bc0324b9992f) (Ginger Society Admin) chore: version bump to 0.5.0-nightly.0
+	
  - [34acde6ffd](https://github.com/ginger-society/metadata-service-backend34acde6ffdc62529b0126c631d37ac70cd2ea5a1) (Ginger Society Admin) chore: reverted response type
 	
+fix:
+ - [48ebd6363f](https://github.com/ginger-society/metadata-service-backend48ebd6363f293a3b3672cf34d128331614a4d19e) (Ginger Society Admin) fix: minor changes to provide default for the is public field
+	
+ - [800fb5b384](https://github.com/ginger-society/metadata-service-backend800fb5b38439ce7a807cb561f5cb706abd3003a5) (Ginger Society Admin) fix: added update db pipeline endpoint
+	
+ - [01e28ac418](https://github.com/ginger-society/metadata-service-backend01e28ac4183b966137f681366c219eadd34a1d60) (Ginger Society Admin) fix: build
+	
+ - [8493324cf4](https://github.com/ginger-society/metadata-service-backend8493324cf420627429b5ceaf908a3728ab5d011e) (Ginger Society Admin) fix: revert the field name change
+	
+ - [29b74a6dcd](https://github.com/ginger-society/metadata-service-backend29b74a6dcd148c5babd4d9eacb72e3386d0b7710) (Ginger Society Admin) fix: build
+	
+ - [cfee7d3320](https://github.com/ginger-society/metadata-service-backendcfee7d332059bb2a266e3edc7b5bd639d4b3e2df) (Ginger Society Admin) fix: minor typo
+	
+ - [bb5782ab9f](https://github.com/ginger-society/metadata-service-backendbb5782ab9f037b910007965bde024748f94907da) (Ginger Society Admin) fix: pipeline
+	
 ## 0.4.0-nightly.0 - 2024-09-01
+fix:
+ - [fc073d9449](https://github.com/ginger-society/metadata-service-backendfc073d9449f8ceacc9e631b60ca4c845a4037bd8) (Ginger Society Admin) fix: security schema
+	
+ - [7037b353bb](https://github.com/ginger-society/metadata-service-backend7037b353bb594652bef831e231eb987fa7cd9375) (Ginger Society Admin) fix: added auth guard in get workspaces
+	
+ - [86f0445af6](https://github.com/ginger-society/metadata-service-backend86f0445af608445e49bee6e8e83f08c87cf57ab3) (Ginger Society Admin) fix: minor changes
+	
+ - [a34dd8a8de](https://github.com/ginger-society/metadata-service-backenda34dd8a8dedb1558bc7e023ef26bf3343b3acf97) (Ginger Society Admin) fix: returning groups owned workspaces
+	
+ - [c22c5a7c9b](https://github.com/ginger-society/metadata-service-backendc22c5a7c9b7467fe8c4a1389a57e80514d189c47) (Ginger Society Admin) fix: update package repo link for existing package
+	
+ - [c57b18db66](https://github.com/ginger-society/metadata-service-backendc57b18db666582a0c96230519c294f2dd8ae45dc) (Ginger Society Admin) fix: minor api update
+	
+ - [799b79338f](https://github.com/ginger-society/metadata-service-backend799b79338f0db8c5f72f2f4a4a613ec4c344cedb) (Ginger Society Admin) fix: edge case handling if the dependencies array is not available in the DB
+	
+ - [080d47be42](https://github.com/ginger-society/metadata-service-backend080d47be42091fd02bd27a91404df0bed8930b8a) (Ginger Society Admin) fix: update description in create_or_update_package
+	
+ - [292e19a8a5](https://github.com/ginger-society/metadata-service-backend292e19a8a50279b8375691ac1a51349d58c27282) (Ginger Society Admin) fix: pipeline revert
+	
+ - [16291feddb](https://github.com/ginger-society/metadata-service-backend16291feddba5dce99e514630ea1cd3839ede0d89) (Ginger Society Admin) fix: pipeline
+	
+ - [ffa33d8354](https://github.com/ginger-society/metadata-service-backendffa33d83548dd338d43fb3257ee4c9fbea1c5f99) (Ginger Society Admin) fix: updated service config
+	
 feat:
  - [a6e75f8367](https://github.com/ginger-society/metadata-service-backenda6e75f83670de2079297f2368059235e08a60ad4) (Ginger Society Admin) feat: guarded few APIs with api token
 	
@@ -166,29 +191,6 @@ chore:
 	
  - [33e46073ff](https://github.com/ginger-society/metadata-service-backend33e46073ffd1396b18747770a2e5ef3ff7a9d9dc) (Ginger Society Admin) chore: typo correction
 	
-fix:
- - [fc073d9449](https://github.com/ginger-society/metadata-service-backendfc073d9449f8ceacc9e631b60ca4c845a4037bd8) (Ginger Society Admin) fix: security schema
-	
- - [7037b353bb](https://github.com/ginger-society/metadata-service-backend7037b353bb594652bef831e231eb987fa7cd9375) (Ginger Society Admin) fix: added auth guard in get workspaces
-	
- - [86f0445af6](https://github.com/ginger-society/metadata-service-backend86f0445af608445e49bee6e8e83f08c87cf57ab3) (Ginger Society Admin) fix: minor changes
-	
- - [a34dd8a8de](https://github.com/ginger-society/metadata-service-backenda34dd8a8dedb1558bc7e023ef26bf3343b3acf97) (Ginger Society Admin) fix: returning groups owned workspaces
-	
- - [c22c5a7c9b](https://github.com/ginger-society/metadata-service-backendc22c5a7c9b7467fe8c4a1389a57e80514d189c47) (Ginger Society Admin) fix: update package repo link for existing package
-	
- - [c57b18db66](https://github.com/ginger-society/metadata-service-backendc57b18db666582a0c96230519c294f2dd8ae45dc) (Ginger Society Admin) fix: minor api update
-	
- - [799b79338f](https://github.com/ginger-society/metadata-service-backend799b79338f0db8c5f72f2f4a4a613ec4c344cedb) (Ginger Society Admin) fix: edge case handling if the dependencies array is not available in the DB
-	
- - [080d47be42](https://github.com/ginger-society/metadata-service-backend080d47be42091fd02bd27a91404df0bed8930b8a) (Ginger Society Admin) fix: update description in create_or_update_package
-	
- - [292e19a8a5](https://github.com/ginger-society/metadata-service-backend292e19a8a50279b8375691ac1a51349d58c27282) (Ginger Society Admin) fix: pipeline revert
-	
- - [16291feddb](https://github.com/ginger-society/metadata-service-backend16291feddba5dce99e514630ea1cd3839ede0d89) (Ginger Society Admin) fix: pipeline
-	
- - [ffa33d8354](https://github.com/ginger-society/metadata-service-backendffa33d83548dd338d43fb3257ee4c9fbea1c5f99) (Ginger Society Admin) fix: updated service config
-	
 ## 0.3.0-nightly.0 - 2024-08-05
 chore:
  - [3901242a3b](https://github.com/ginger-society/metadata-service-backend3901242a3be98b43a4109da89e999313059d74c9) (Ginger Society Admin) chore: version bump to 0.3.0-nightly.0
@@ -212,6 +214,11 @@ fix:
 	
  - [eedbb92d03](https://github.com/ginger-society/metadata-service-backendeedbb92d03ec233b3f418c7ceb5a3afbf909f3f9) (Ginger Society Admin) fix: pipeline changes
 	
+chore:
+ - [13a8c013f0](https://github.com/ginger-society/metadata-service-backend13a8c013f0253e5eea56fbfdbd37fd58540d8ac8) (Ginger Society Admin) chore: version bump to 0.1.0-nightly.0
+	
+ - [0bffe65578](https://github.com/ginger-society/metadata-service-backend0bffe65578aa6f9a9e177a6db6ca2b569af8cfbe) (Ginger Society Admin) chore: first commit
+	
 feat:
  - [96bc8988fd](https://github.com/ginger-society/metadata-service-backend96bc8988fd8e4b81cfe69eadd8dfe247433c3d8e) (Ginger Society Admin) feat: added orgid in getschema response
 	
@@ -232,9 +239,4 @@ feat:
  - [7ff086e9e2](https://github.com/ginger-society/metadata-service-backend7ff086e9e2da98f017447fb5740ff5e451cdc0cf) (Ginger Society Admin) feat: readme updated
 	
  - [ea8b653975](https://github.com/ginger-society/metadata-service-backendea8b653975818e1208edeaf1f83a314b7247d689) (Ginger Society Admin) feat: minor cleanup
-	
-chore:
- - [13a8c013f0](https://github.com/ginger-society/metadata-service-backend13a8c013f0253e5eea56fbfdbd37fd58540d8ac8) (Ginger Society Admin) chore: version bump to 0.1.0-nightly.0
-	
- - [0bffe65578](https://github.com/ginger-society/metadata-service-backend0bffe65578aa6f9a9e177a6db6ca2b569af8cfbe) (Ginger Society Admin) chore: first commit
 	
