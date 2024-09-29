@@ -41,17 +41,17 @@ impl<'a> OpenApiFromRequest<'a> for NotificationService_api_config {
         let security_scheme = SecurityScheme {
             description: Some("Requires a Bearer token to access".to_owned()),
             data: SecuritySchemeData::ApiKey {
-                name: "Authorization".to_owned(),
+                name: "X-API-Authorization".to_owned(),
                 location: "header".to_owned(),
             },
             extensions: Object::default(),
         };
 
         let mut security_req = SecurityRequirement::new();
-        security_req.insert("BearerAuth".to_owned(), Vec::new());
+        security_req.insert("ApiBearerAuth".to_owned(), Vec::new());
 
         Ok(RequestHeaderInput::Security(
-            "BearerAuth".to_owned(),
+            "ApiBearerAuth".to_owned(),
             security_scheme,
             security_req,
         ))
