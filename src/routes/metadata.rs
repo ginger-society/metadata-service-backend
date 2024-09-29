@@ -1904,6 +1904,7 @@ pub async fn update_pipeline_status(
 ) -> Result<status::NoContent, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl as dbschema_dsl;
     use crate::models::schema::schema::dbschema_branch::dsl as dbschema_branch_dsl;
+    use crate::models::schema::schema::organization::dsl as org_dsl;
     use crate::models::schema::schema::package::dsl as package_dsl;
     use crate::models::schema::schema::package_env::dsl as package_env_dsl;
     use crate::models::schema::schema::service::dsl as service_dsl;
@@ -2006,10 +2007,16 @@ pub async fn update_pipeline_status(
         }
     }
 
+    let group_id = org_dsl::organization
+        .filter(org_dsl::slug.eq(&org_id))
+        .select(org_dsl::group_id)
+        .first::<String>(&mut conn)
+        .map_err(|_| status::Custom(Status::NotFound, "Organization not found".to_string()))?;
+
     match publish_message_to_group(
         &notification_config.0,
         PublishMessageToGroupParams {
-            group_id: "ds".to_string(),
+            group_id,
             publish_request: PublishRequest {
                 message: "dsad".to_string(),
             },
