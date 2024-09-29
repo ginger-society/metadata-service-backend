@@ -3,11 +3,13 @@ use crate::middlewares::groups::GroupMemberships;
 use crate::middlewares::groups_owned::GroupOwnerships;
 use crate::middlewares::jwt::Claims;
 use crate::middlewares::IAMService_config::IAMService_config;
+use crate::middlewares::NotificationService_api_config::NotificationService_api_config;
 use crate::models::schema::{
     Dbschema, DbschemaInsertable, Dbschema_Branch, Dbschema_BranchInsertable, Package,
     PackageInsertable, Package_Env, Package_EnvInsertable, Service, ServiceInsertable,
     Service_Envs, Service_EnvsInsertable, Snapshots, SnapshotsInsertable, Templates,
 };
+
 use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -21,6 +23,9 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use IAMService::apis::default_api::{identity_create_group, IdentityCreateGroupParams};
 use IAMService::models::CreateGroupRequest;
+use NotificationService::apis::crate_api::{publish_message_to_group, PublishMessageToGroupParams};
+use NotificationService::models::PublishRequest;
+
 #[derive(Deserialize, Serialize, JsonSchema)]
 pub struct CreateDbschemaRequest {
     pub name: String,
@@ -1888,12 +1893,14 @@ pub struct PipelineStatusUpdateRequest {
     pub org_id: String,      // organization ID to filter
     pub identifier: String,  // identifier to filter
 }
+
 #[openapi]
 #[put("/update-pipeline-status", format = "json", data = "<status_update>")]
 pub async fn update_pipeline_status(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     status_update: Json<PipelineStatusUpdateRequest>,
     _claims: APIClaims,
+    notification_config: NotificationService_api_config,
 ) -> Result<status::NoContent, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl as dbschema_dsl;
     use crate::models::schema::schema::dbschema_branch::dsl as dbschema_branch_dsl;
@@ -1997,6 +2004,21 @@ pub async fn update_pipeline_status(
                 "Invalid update_type provided".to_string(),
             ));
         }
+    }
+
+    match publish_message_to_group(
+        &notification_config.0,
+        PublishMessageToGroupParams {
+            group_id: "ds".to_string(),
+            publish_request: PublishRequest {
+                message: "dsad".to_string(),
+            },
+        },
+    )
+    .await
+    {
+        Ok(_) => {}
+        Err(_) => {}
     }
 
     Ok(status::NoContent)

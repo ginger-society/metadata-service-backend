@@ -4,12 +4,17 @@ organization_id = "ginger-society"
 service_type = "RPCEndpoint"
 spec_url = "/openapi.json"
 
+[services."@ginger-society/NotificationService"]
+stage = "https://api-staging.gingersociety.org/notification"
+
 [services."@ginger-society/IAMService"]
 dev = "http://localhost:8080/iam"
 stage = "https://api-staging.gingersociety.org/iam"
 stage_k8 = "http://iam-service-api-service/iam"
 
-[portals_refs]
+[portals_refs."@ginger-society/iam-frontend-users"]
+dev = "http://localhost:3001"
+stage = "https://iam-staging.gingersociety.org"
 
 [urls]
 dev = "http://localhost:8081/metadata"

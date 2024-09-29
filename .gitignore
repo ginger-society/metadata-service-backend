@@ -20,5 +20,6 @@ Cargo.lock
 .ginger.tmp
 config.toml
 IAMService_client
+NotificationService_client
 .DS_Store
 openapitools.json
