@@ -2018,7 +2018,12 @@ pub async fn update_pipeline_status(
     .await
     {
         Ok(_) => {}
-        Err(_) => {}
+        Err(e) => {
+            return Err(status::Custom(
+                Status::InternalServerError,
+                format!("Failed to publish message: {:?}", e),
+            ));
+        }
     }
 
     Ok(status::NoContent)
