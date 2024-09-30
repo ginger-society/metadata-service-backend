@@ -26,6 +26,20 @@ use IAMService::models::CreateGroupRequest;
 use NotificationService::apis::crate_api::{publish_message_to_group, PublishMessageToGroupParams};
 use NotificationService::models::PublishRequest;
 
+#[derive(Serialize)]
+struct RealtimeMessage {
+    topic: String,
+    payload: String,
+}
+
+// Implement the `ToString` trait for the struct
+impl ToString for RealtimeMessage {
+    fn to_string(&self) -> String {
+        // Convert the struct to a JSON string using serde_json
+        serde_json::to_string(self).unwrap_or_else(|_| "Failed to serialize".to_string())
+    }
+}
+
 #[derive(Deserialize, Serialize, JsonSchema)]
 pub struct CreateDbschemaRequest {
     pub name: String,
@@ -2013,12 +2027,17 @@ pub async fn update_pipeline_status(
         .first::<String>(&mut conn)
         .map_err(|_| status::Custom(Status::NotFound, "Organization not found".to_string()))?;
 
+    let msg = RealtimeMessage {
+        topic: "pipeline-update".to_string(),
+        payload: "".to_string(),
+    };
+
     match publish_message_to_group(
         &notification_config.0,
         PublishMessageToGroupParams {
             group_id,
             publish_request: PublishRequest {
-                message: "dsad".to_string(),
+                message: msg.to_string(),
             },
         },
     )
