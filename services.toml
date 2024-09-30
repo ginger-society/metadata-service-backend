@@ -5,8 +5,8 @@ service_type = "RPCEndpoint"
 spec_url = "/openapi.json"
 
 [services."@ginger-society/NotificationService"]
-stage = "https://api-staging.gingersociety.org/notification"
-stage_k8 = "http://notification-service-service/notification"
+stage = "https://api-staging.gingersociety.org"
+stage_k8 = "http://notification-service-service"
 
 [services."@ginger-society/IAMService"]
 dev = "http://localhost:8080/iam"
