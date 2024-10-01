@@ -48,10 +48,10 @@ impl<'a> OpenApiFromRequest<'a> for NotificationService_api_config {
         };
 
         let mut security_req = SecurityRequirement::new();
-        security_req.insert("ApiBearerAuth".to_owned(), Vec::new());
+        security_req.insert("BearerAPIAuth".to_owned(), Vec::new());
 
         Ok(RequestHeaderInput::Security(
-            "ApiBearerAuth".to_owned(),
+            "BearerAPIAuth".to_owned(),
             security_scheme,
             security_req,
         ))
