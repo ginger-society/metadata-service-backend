@@ -97,6 +97,8 @@ pub mod schema {
             cache_schema_id ->Nullable<Varchar>,
             #[max_length = 10000]
             quick_links ->Nullable<Varchar>,
+            #[max_length = 150]
+            message_queue_schema_id ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -296,6 +298,7 @@ pub struct Service {
     pub repo_origin:Option<String>,
     pub cache_schema_id:Option<String>,
     pub quick_links:Option<String>,
+    pub message_queue_schema_id:Option<String>,
     pub id:i64,
     
 }
@@ -452,6 +455,7 @@ pub struct ServiceInsertable {
     pub repo_origin:Option<String>,
     pub cache_schema_id:Option<String>,
     pub quick_links:Option<String>,
+    pub message_queue_schema_id:Option<String>,
     
 }
 
