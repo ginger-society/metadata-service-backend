@@ -20,6 +20,7 @@ use rocket::State;
 use rocket_okapi::openapi;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use uuid::Uuid;
 use IAMService::apis::default_api::{identity_create_group, IdentityCreateGroupParams};
 use IAMService::models::CreateGroupRequest;
@@ -2036,7 +2037,8 @@ pub async fn update_pipeline_status(
 
     let msg = RealtimeMessage {
         topic: "pipeline-update".to_string(),
-        payload: "".to_string(),
+        payload: serde_json::to_string(&json!({"org_id" : org_id , "identifier" : identifier }))
+            .unwrap(),
     };
 
     match publish_message_to_group(
