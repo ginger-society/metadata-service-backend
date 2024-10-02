@@ -6,9 +6,6 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . .
 
-# Set executable permissions for the build script
-RUN chmod +x /app/build.sh
-
 ARG GINGER_TOKEN
 ENV GINGER_TOKEN=$GINGER_TOKEN
 
