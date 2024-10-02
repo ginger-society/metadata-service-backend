@@ -66,8 +66,8 @@ jobs:
       run: ginger-connector publish stage-k8
       env:
         GINGER_TOKEN: ${{ secrets.GINGER_TOKEN }}
-        
-    - name: Update pipeline to running
+
+    - name: Update pipeline to passing
       run: ginger-connector update-pipeline stage passing
 
     - name: Trigger dependent pipelines
