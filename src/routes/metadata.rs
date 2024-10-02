@@ -1985,7 +1985,7 @@ pub async fn update_pipeline_status(
                     .filter(package_env_dsl::parent_id.eq(parent_id))
                     .filter(package_env_dsl::env.eq(&env)),
             )
-            .set(package_env_dsl::pipeline_status.eq(status))
+            .set(package_env_dsl::pipeline_status.eq(status.clone()))
             .execute(&mut conn)
             .map_err(|_| {
                 status::Custom(
