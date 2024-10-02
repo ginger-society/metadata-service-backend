@@ -2012,7 +2012,7 @@ pub async fn update_pipeline_status(
                     .filter(service_envs_dsl::parent_id.eq(parent_id))
                     .filter(service_envs_dsl::env.eq(&env)),
             )
-            .set(service_envs_dsl::pipeline_status.eq(status))
+            .set(service_envs_dsl::pipeline_status.eq(status.clone()))
             .execute(&mut conn)
             .map_err(|_| {
                 status::Custom(
