@@ -2037,8 +2037,10 @@ pub async fn update_pipeline_status(
 
     let msg = RealtimeMessage {
         topic: "pipeline-update".to_string(),
-        payload: serde_json::to_string(&json!({"org_id" : org_id , "identifier" : identifier }))
-            .unwrap(),
+        payload: serde_json::to_string(
+            &json!({"org_id" : org_id , "identifier" : identifier, "status" : status }),
+        )
+        .unwrap(),
     };
 
     match publish_message_to_group(
