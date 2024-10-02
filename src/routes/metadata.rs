@@ -1961,7 +1961,7 @@ pub async fn update_pipeline_status(
                     .filter(dbschema_branch_dsl::parent_id.eq(parent_id))
                     .filter(dbschema_branch_dsl::branch_name.eq(&env)),
             )
-            .set(dbschema_branch_dsl::pipeline_status.eq(status))
+            .set(dbschema_branch_dsl::pipeline_status.eq(status.clone()))
             .execute(&mut conn)
             .map_err(|_| {
                 status::Custom(
@@ -2038,7 +2038,7 @@ pub async fn update_pipeline_status(
     let msg = RealtimeMessage {
         topic: "pipeline-update".to_string(),
         payload: serde_json::to_string(
-            &json!({"org_id" : org_id , "identifier" : identifier, "status" : status }),
+            &json!({"org_id" : org_id , "identifier" : identifier, "status" : status.clone() }),
         )
         .unwrap(),
     };
