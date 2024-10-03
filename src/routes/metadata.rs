@@ -2248,6 +2248,7 @@ pub struct WorkspaceSummary {
     is_admin: bool,
     group_id: String,
     infra_repo_origin: Option<String>,
+    quick_links: Option<String>,
 }
 
 #[openapi()]
@@ -2273,8 +2274,22 @@ pub async fn get_workspaces(
 
     let workspaces: Vec<WorkspaceSummary> = organization
         .filter(group_id.eq_any(memberships))
-        .select((slug, name, is_active, group_id, infra_repo_origin))
-        .load::<(String, Option<String>, bool, String, Option<String>)>(&mut conn)
+        .select((
+            slug,
+            name,
+            is_active,
+            group_id,
+            infra_repo_origin,
+            quick_links,
+        ))
+        .load::<(
+            String,
+            Option<String>,
+            bool,
+            String,
+            Option<String>,
+            Option<String>,
+        )>(&mut conn)
         .map_err(|_| {
             status::Custom(
                 Status::InternalServerError,
@@ -2283,13 +2298,16 @@ pub async fn get_workspaces(
         })?
         .into_iter()
         .map(
-            |(_slug, _name, _is_active, _group_id, _infra_repo_origin)| WorkspaceSummary {
-                slug: _slug,
-                name: _name,
-                is_active: _is_active,
-                is_admin: ownerships.contains(&_group_id),
-                group_id: _group_id,
-                infra_repo_origin: _infra_repo_origin,
+            |(_slug, _name, _is_active, _group_id, _infra_repo_origin, _quick_links)| {
+                WorkspaceSummary {
+                    slug: _slug,
+                    name: _name,
+                    is_active: _is_active,
+                    is_admin: ownerships.contains(&_group_id),
+                    group_id: _group_id,
+                    infra_repo_origin: _infra_repo_origin,
+                    quick_links: _quick_links,
+                }
             },
         )
         .collect();
@@ -2413,8 +2431,22 @@ pub async fn get_workspace_details(
     let workspace = organization
         .filter(slug.eq(&org_id))
         .filter(group_id.eq_any(&ownerships))
-        .select((slug, name, is_active, group_id, infra_repo_origin))
-        .first::<(String, Option<String>, bool, String, Option<String>)>(&mut conn)
+        .select((
+            slug,
+            name,
+            is_active,
+            group_id,
+            infra_repo_origin,
+            quick_links,
+        ))
+        .first::<(
+            String,
+            Option<String>,
+            bool,
+            String,
+            Option<String>,
+            Option<String>,
+        )>(&mut conn)
         .optional()
         .map_err(|_| {
             status::Custom(
@@ -2424,7 +2456,7 @@ pub async fn get_workspace_details(
         })?;
 
     match workspace {
-        Some((_slug, _name, _is_active, _group_id, _infra_repo_origin)) => {
+        Some((_slug, _name, _is_active, _group_id, _infra_repo_origin, _quick_links)) => {
             Ok(Json(WorkspaceSummary {
                 slug: _slug,
                 name: _name,
@@ -2432,6 +2464,7 @@ pub async fn get_workspace_details(
                 group_id: _group_id,
                 is_admin: true,
                 infra_repo_origin: _infra_repo_origin,
+                quick_links: _quick_links,
             }))
         }
         None => Err(status::Custom(
