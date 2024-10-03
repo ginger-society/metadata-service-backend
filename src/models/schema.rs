@@ -175,6 +175,8 @@ pub mod schema {
             infra_repo_origin ->Nullable<Varchar>,
             #[max_length = 20000]
             quick_links ->Nullable<Varchar>,
+            #[max_length = 25]
+            version ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -371,6 +373,7 @@ pub struct Organization {
     pub is_public:bool,
     pub infra_repo_origin:Option<String>,
     pub quick_links:Option<String>,
+    pub version:Option<String>,
     pub id:i64,
     
 }
@@ -525,6 +528,7 @@ pub struct OrganizationInsertable {
     pub is_public:bool,
     pub infra_repo_origin:Option<String>,
     pub quick_links:Option<String>,
+    pub version:Option<String>,
     
 }
 

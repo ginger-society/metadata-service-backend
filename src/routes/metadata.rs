@@ -2158,6 +2158,7 @@ pub async fn create_organization(
                 is_public: false,
                 infra_repo_origin: None,
                 quick_links: None,
+                version: None,
             };
 
             let created_organization: Organization = diesel::insert_into(organization)
@@ -2249,6 +2250,7 @@ pub struct WorkspaceSummary {
     group_id: String,
     infra_repo_origin: Option<String>,
     quick_links: Option<String>,
+    version: Option<String>,
 }
 
 #[openapi()]
@@ -2281,12 +2283,14 @@ pub async fn get_workspaces(
             group_id,
             infra_repo_origin,
             quick_links,
+            version,
         ))
         .load::<(
             String,
             Option<String>,
             bool,
             String,
+            Option<String>,
             Option<String>,
             Option<String>,
         )>(&mut conn)
@@ -2298,7 +2302,7 @@ pub async fn get_workspaces(
         })?
         .into_iter()
         .map(
-            |(_slug, _name, _is_active, _group_id, _infra_repo_origin, _quick_links)| {
+            |(_slug, _name, _is_active, _group_id, _infra_repo_origin, _quick_links, _version)| {
                 WorkspaceSummary {
                     slug: _slug,
                     name: _name,
@@ -2307,6 +2311,7 @@ pub async fn get_workspaces(
                     group_id: _group_id,
                     infra_repo_origin: _infra_repo_origin,
                     quick_links: _quick_links,
+                    version: _version,
                 }
             },
         )
@@ -2438,12 +2443,14 @@ pub async fn get_workspace_details(
             group_id,
             infra_repo_origin,
             quick_links,
+            version,
         ))
         .first::<(
             String,
             Option<String>,
             bool,
             String,
+            Option<String>,
             Option<String>,
             Option<String>,
         )>(&mut conn)
@@ -2456,7 +2463,7 @@ pub async fn get_workspace_details(
         })?;
 
     match workspace {
-        Some((_slug, _name, _is_active, _group_id, _infra_repo_origin, _quick_links)) => {
+        Some((_slug, _name, _is_active, _group_id, _infra_repo_origin, _quick_links, _version)) => {
             Ok(Json(WorkspaceSummary {
                 slug: _slug,
                 name: _name,
@@ -2465,6 +2472,7 @@ pub async fn get_workspace_details(
                 is_admin: true,
                 infra_repo_origin: _infra_repo_origin,
                 quick_links: _quick_links,
+                version: _version,
             }))
         }
         None => Err(status::Custom(
@@ -2668,6 +2676,7 @@ pub async fn create_snapshot(
     .set((
         org_dsl::infra_repo_origin.eq(create_snapshot_request.infra_repo_origin.clone()),
         org_dsl::quick_links.eq(create_snapshot_request.quick_links.clone()),
+        org_dsl::version.eq(create_snapshot_request.version.clone()),
     )) // Assuming this field is in your organization table
     .execute(&mut conn)
     .map_err(|_| {
