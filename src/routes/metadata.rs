@@ -2157,6 +2157,7 @@ pub async fn create_organization(
                 blocks_positions: None,
                 is_public: false,
                 infra_repo_origin: None,
+                quick_links: None,
             };
 
             let created_organization: Organization = diesel::insert_into(organization)
@@ -2591,6 +2592,7 @@ pub struct CreateSnapshotRequest {
     pub version: String,
     pub org_id: String,
     pub infra_repo_origin: String,
+    pub quick_links: String,
 }
 
 #[openapi]
@@ -2630,7 +2632,10 @@ pub async fn create_snapshot(
     let updated_rows = diesel::update(
         org_dsl::organization.filter(org_dsl::slug.eq(create_snapshot_request.org_id.clone())),
     )
-    .set(org_dsl::infra_repo_origin.eq(create_snapshot_request.infra_repo_origin.clone())) // Assuming this field is in your organization table
+    .set((
+        org_dsl::infra_repo_origin.eq(create_snapshot_request.infra_repo_origin.clone()),
+        org_dsl::quick_links.eq(create_snapshot_request.quick_links.clone()),
+    )) // Assuming this field is in your organization table
     .execute(&mut conn)
     .map_err(|_| {
         status::Custom(
