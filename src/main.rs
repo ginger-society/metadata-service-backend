@@ -67,7 +67,8 @@ fn rocket() -> Rocket<Build> {
                 metadata::get_user_packages_user_land,
                 metadata::get_dbschemas_and_tables_user_land,
                 metadata::create_snapshot,
-                metadata::get_snapshots
+                metadata::get_snapshots,
+                metadata::get_package_version
             ],
         )
         .mount(
