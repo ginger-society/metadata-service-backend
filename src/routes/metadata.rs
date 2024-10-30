@@ -2011,7 +2011,7 @@ pub async fn delete_workspace(
     // Fetch the workspace to ensure it exists and check if the user has permission to delete it
     let workspace = organization
         .filter(slug.eq(org_id.clone()))
-        .select((group_id))
+        .select(group_id)
         .first::<String>(&mut conn)
         .optional()
         .map_err(|_| Status::InternalServerError)?;

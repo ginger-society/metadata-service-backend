@@ -11,7 +11,6 @@ use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 use rocket_prometheus::PrometheusMetrics;
 use std::env;
 mod db;
-mod errors;
 mod fairings;
 mod middlewares;
 mod models;
