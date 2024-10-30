@@ -1,6 +1,6 @@
 ## Metadata service backend
 
-DB : https://github.com/ginger-society/metadata-service-db
+DB : https://github.com/ginger-society/ginger-db
 
 ## 🔧 Building and Testing
 
