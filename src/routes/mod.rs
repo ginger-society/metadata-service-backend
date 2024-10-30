@@ -1,16 +1,6 @@
-use crate::middlewares::groups::GroupMemberships;
-use diesel::r2d2;
-use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::PgConnection;
 use ginger_shared_rs::rocket_models::MessageResponse;
-use ginger_shared_rs::rocket_utils::Claims;
-use r2d2_redis::RedisConnectionManager;
-
-use crate::middlewares::IAMService_config::IAMService_config;
 use rocket::serde::json::Json;
-use rocket::State;
 use rocket_okapi::openapi;
-use IAMService::apis::default_api::routes_index;
 
 pub mod metadata;
 
@@ -20,41 +10,5 @@ pub mod metadata;
 pub fn index() -> Json<MessageResponse> {
     Json(MessageResponse {
         message: "Ok".to_string(),
-    })
-}
-
-// async fn get_healthcheck(
-//     openapi_configuration: &Configuration,
-// ) -> Result<OtherMessageResponse, Box<dyn std::error::Error>> {
-//     match routes_index(openapi_configuration).await {
-//         Ok(response) => Ok(response),
-//         Err(e) => Err(Box::new(e)),
-//     }
-// }
-
-#[openapi()]
-#[get("/route2")]
-pub async fn route2(
-    rdb: &State<r2d2::Pool<ConnectionManager<PgConnection>>>,
-    cache: &State<Pool<RedisConnectionManager>>,
-    claims: Claims,
-    iam_service_config: IAMService_config,
-    groups: GroupMemberships,
-) -> Json<MessageResponse> {
-    match routes_index(&iam_service_config.0).await {
-        Ok(status) => println!("{:?}", status),
-        Err(e) => {
-            // Handle the error appropriately
-            println!("{:?}", e);
-            return Json(MessageResponse {
-                message: "Health check failed".to_string(),
-            });
-        }
-    }
-
-    println!("{:?}", groups);
-
-    Json(MessageResponse {
-        message: format!("Hello, {}! This is a protected route.", claims.user_id),
     })
 }

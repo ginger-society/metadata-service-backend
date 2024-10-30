@@ -29,7 +29,6 @@ fn rocket() -> Rocket<Build> {
             "/metadata/",
             openapi_get_routes![
                 routes::index,
-                routes::route2,
                 metadata::create_dbschema,
                 metadata::get_dbschemas,
                 metadata::update_dbschema,
