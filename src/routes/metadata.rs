@@ -854,12 +854,12 @@ pub fn get_service_and_env_by_id_user_land(
 }
 
 #[openapi]
-#[get("/services/<service_identifier>")]
+#[get("/services/<service_identifier>/<org_id>")]
 pub fn get_service_by_id(
     service_identifier: String,
+    org_id: String,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
-    claims: Claims,
-    groups: GroupMemberships,
+    claims: APIClaims,
 ) -> Result<Json<ServiceResponse>, rocket::http::Status> {
     use crate::models::schema::schema::service::dsl::*;
 
@@ -867,16 +867,10 @@ pub fn get_service_by_id(
         .get()
         .map_err(|_| rocket::http::Status::ServiceUnavailable)?;
 
-    // Extract group IDs from the `groups` parameter
-    let group_ids: Vec<String> = groups.0;
-
     // Query the service by ID and ensure it belongs to one of the user's groups
     let service_item = service
-        .filter(
-            identifier
-                .eq(service_identifier)
-                .and(group_id.eq_any(&group_ids)),
-        )
+        .filter(organization_id.eq(org_id.clone()))
+        .filter(identifier.eq(service_identifier))
         .first::<Service>(&mut conn)
         .map_err(|_| rocket::http::Status::NotFound)?;
 
