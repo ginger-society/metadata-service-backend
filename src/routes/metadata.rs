@@ -894,6 +894,7 @@ pub fn get_service_by_id(
         tables: tables,
         organization_id: service_item.organization_id.unwrap_or(String::from("")),
         description: service_item.description.unwrap_or(String::from("")),
+        repo_origin: service_item.repo_origin,
     };
 
     Ok(Json(response))

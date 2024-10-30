@@ -115,6 +115,7 @@ pub struct ServiceResponse {
     pub tables: Vec<String>,
     pub description: String,
     pub organization_id: String,
+    pub repo_origin: Option<String>,
 }
 
 #[derive(Serialize, JsonSchema)]
