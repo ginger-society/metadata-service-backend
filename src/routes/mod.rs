@@ -1,8 +1,8 @@
 use crate::middlewares::groups::GroupMemberships;
-use crate::models::response::MessageResponse;
 use diesel::r2d2;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
+use ginger_shared_rs::rocket_models::MessageResponse;
 use ginger_shared_rs::rocket_utils::Claims;
 use r2d2_redis::RedisConnectionManager;
 

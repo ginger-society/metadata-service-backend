@@ -7,9 +7,24 @@ use crate::models::schema::{
     PackageInsertable, Package_Env, Package_EnvInsertable, Service, ServiceInsertable,
     Service_Envs, Service_EnvsInsertable, Snapshots, SnapshotsInsertable, Templates,
 };
+use ginger_shared_rs::rocket_models::RealtimeMessage;
 use ginger_shared_rs::rocket_utils::{APIClaims, Claims};
 
-use chrono::{DateTime, Utc};
+use crate::models::request::{
+    CreateDbschemaBranchRequest, CreateDbschemaRequest, CreateOrUpdatePackageRequest,
+    CreateOrganizationRequest, CreateSnapshotRequest, PipelineStatusUpdateRequest,
+    UpdateDbPipelineRequest, UpdateDbschemaBranchRequest, UpdateDbschemaRequest,
+    UpdateServiceRequest,
+};
+use crate::models::response::{
+    APISessionDetailsResponse, CreateDbschemaBranchResponse, CreateDbschemaResponse,
+    CreateOrUpdatePackageResponse, CreateOrganizationResponse, GetDbschemaAndTablesResponse,
+    GetDbschemaByIdResponse, GetDbschemaResponse, PackageResponse, ServiceResponse,
+    ServicesEnvResponse, ServicesEnvTrimmedResponse, ServicesTrimmedResponse, SnapshotsResponse,
+    UpdateDbschemaBranchResponse, UpdateServiceResponse, VersionResponse, WorkspaceSummaryResponse,
+};
+
+use chrono::Utc;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use rocket::http::Status;
@@ -25,104 +40,6 @@ use IAMService::apis::default_api::{identity_create_group, IdentityCreateGroupPa
 use IAMService::models::CreateGroupRequest;
 use NotificationService::apis::crate_api::{publish_message_to_group, PublishMessageToGroupParams};
 use NotificationService::models::PublishRequest;
-
-#[derive(Serialize)]
-struct RealtimeMessage {
-    topic: String,
-    payload: String,
-}
-
-// Implement the `ToString` trait for the struct
-impl ToString for RealtimeMessage {
-    fn to_string(&self) -> String {
-        // Convert the struct to a JSON string using serde_json
-        serde_json::to_string(self).unwrap_or_else(|_| "Failed to serialize".to_string())
-    }
-}
-
-#[derive(Deserialize, Serialize, JsonSchema)]
-pub struct CreateDbschemaRequest {
-    pub name: String,
-    pub description: Option<String>,
-    pub data: Option<String>,
-    pub organisation_id: String,
-    pub db_type: String,
-    pub repo_origin: String,
-    pub version: String,
-    pub quick_links: Option<String>,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct CreateDbschemaResponse {
-    pub message: String,
-    pub id: i64,
-    pub identifier: String,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct GetDbschemaResponse {
-    pub id: i64,
-    pub name: String,
-    pub description: Option<String>,
-    pub updated_at: chrono::DateTime<Utc>,
-    pub identifier: Option<String>,
-    pub organization_id: String,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct GetDbschemaAndTablesResponse {
-    pub id: i64,
-    pub name: String,
-    pub description: Option<String>,
-    pub version: Option<String>,
-    pub updated_at: chrono::DateTime<Utc>,
-    pub identifier: Option<String>,
-    pub db_type: Option<String>,
-    pub organization_id: String,
-    pub tables: Vec<String>,
-    pub pipeline_status: Option<String>,
-    pub repo_origin: Option<String>,
-    pub quick_links: Option<String>,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct GetDbschemaByIdResponse {
-    pub id: i64,
-    pub name: String,
-    pub description: Option<String>,
-    pub version: Option<String>,
-    pub updated_at: chrono::DateTime<Utc>,
-    pub data: Option<String>,
-    pub branch_id: Option<i64>,
-    pub org_id: Option<String>,
-}
-
-#[derive(Deserialize, JsonSchema, Serialize)]
-pub struct UpdateDbschemaRequest {
-    pub name: String,
-    pub description: Option<String>,
-    pub organisation_id: String,
-    pub repo_origin: String,
-    pub version: String,
-    pub quick_links: Option<String>,
-}
-
-#[derive(Deserialize, JsonSchema, Serialize)]
-pub struct UpdateDbPipelineRequest {
-    pub status: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, JsonSchema)]
-pub struct CreateDbschemaBranchRequest {
-    pub branch_name: String,
-    pub data: Option<String>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct CreateDbschemaBranchResponse {
-    pub message: String,
-    pub id: i64,
-}
 
 #[openapi()]
 #[post("/dbschema", data = "<create_request>")]
@@ -477,19 +394,6 @@ pub fn create_dbschema_branch(
     Ok(Json(response))
 }
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema)]
-pub struct UpdateDbschemaBranchRequest {
-    pub branch_name: String,
-    pub data: Option<String>,
-    pub merged: Option<bool>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct UpdateDbschemaBranchResponse {
-    pub message: String,
-    pub id: i64,
-}
-
 #[openapi()]
 #[put(
     "/dbschemas/<schema_id>/branches/<branch_id>",
@@ -569,32 +473,6 @@ pub fn update_dbschema_branch(
     };
 
     Ok(Json(response))
-}
-
-#[derive(Debug, Serialize, Deserialize, JsonSchema)]
-pub struct UpdateServiceRequest {
-    pub identifier: String,
-    pub env: String,
-    pub base_url: String,
-    pub spec: String,
-    pub dependencies: Vec<String>,
-    pub tables: Vec<String>,
-    pub db_schema_id: Option<String>,
-    pub cache_schema_id: Option<String>,
-    pub message_queue_schema_id: Option<String>,
-    pub service_type: Option<String>,
-    pub version: Option<String>,
-    pub lang: Option<String>,
-    pub description: String,
-    pub organization_id: String,
-    pub repo_origin: Option<String>,
-    pub quick_links: Option<String>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct UpdateServiceResponse {
-    pub message: String,
-    pub service_id: i64,
 }
 
 #[openapi()]
@@ -760,36 +638,6 @@ pub async fn update_or_create_service(
     Ok(Json(response))
 }
 
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct ServicesEnvResponse {
-    pub spec: String,
-    pub base_url: String,
-}
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct ServicesEnvTrimmedResponse {
-    pub env_key: String,
-    pub base_url: String,
-    pub updated_at: Option<DateTime<Utc>>,
-    pub version: Option<String>,
-    pub pipeline_status: Option<String>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct ServicesTrimmedResponse {
-    pub identifier: String,
-    pub envs: Vec<ServicesEnvTrimmedResponse>,
-    pub tables: Vec<String>,
-    pub dependencies: Vec<String>,
-    pub db_schema_id: Option<String>,
-    pub cache_schema_id: Option<String>,
-    pub message_queue_schema_id: Option<String>,
-    pub service_type: Option<String>,
-    pub lang: Option<String>,
-    pub description: String,
-    pub organization_id: String,
-    pub repo_origin: Option<String>,
-    pub quick_links: Option<String>,
-}
 fn fetch_services_and_envs(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     org_id: &str,
@@ -901,21 +749,12 @@ pub fn get_services_and_envs(
     Ok(Json(response))
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
-pub struct APISessionDetails {
-    sub: String,
-    exp: usize,
-    scopes: Vec<String>,
-    group_id: i64,
-    org_id: String,
-}
-
 #[openapi]
 #[get("/get-current-workspace")]
 pub fn get_current_workspace(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     claims: APIClaims,
-) -> Result<Json<APISessionDetails>, rocket::http::Status> {
+) -> Result<Json<APISessionDetailsResponse>, rocket::http::Status> {
     use crate::models::schema::schema::organization::dsl::*;
     let mut conn = rdb
         .get()
@@ -928,7 +767,7 @@ pub fn get_current_workspace(
         .map_err(|_| rocket::http::Status::InternalServerError)?;
 
     if let Some(org) = result {
-        let session_details = APISessionDetails {
+        let session_details = APISessionDetailsResponse {
             sub: claims.sub,
             exp: claims.exp,
             scopes: claims.scopes,
@@ -1014,18 +853,6 @@ pub fn get_service_and_env_by_id_user_land(
     Ok(Json(env_response))
 }
 
-#[derive(Serialize, JsonSchema, Debug)]
-pub struct ServiceResponse {
-    pub id: i64,
-    pub identifier: String,
-    pub group_id: Option<String>,
-    pub db_schema_id: String,
-    pub dependencies: Vec<String>,
-    pub tables: Vec<String>,
-    pub description: String,
-    pub organization_id: String,
-}
-
 #[openapi]
 #[get("/services/<service_identifier>")]
 pub fn get_service_by_id(
@@ -1070,26 +897,6 @@ pub fn get_service_by_id(
     };
 
     Ok(Json(response))
-}
-
-#[derive(Deserialize, Serialize, JsonSchema)]
-pub struct CreateOrUpdatePackageRequest {
-    pub identifier: String,
-    pub package_type: String,
-    pub lang: String,
-    pub version: String,
-    pub description: String,
-    pub organization_id: String,
-    pub dependencies: Vec<String>,
-    pub env: String,
-    pub repo_origin: Option<String>,
-    pub quick_links: Option<String>,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct CreateOrUpdatePackageResponse {
-    pub message: String,
-    pub package_id: i64,
 }
 
 #[openapi()]
@@ -1230,20 +1037,6 @@ pub async fn create_or_update_package(
     Ok(status::Created::new("/package").body(Json(response)))
 }
 
-#[derive(Serialize, JsonSchema)]
-pub struct PackageResponse {
-    pub identifier: String,
-    pub package_type: String,
-    pub lang: String,
-    pub version: String,
-    pub updated_at: DateTime<Utc>,
-    pub description: String,
-    pub organization_id: String,
-    pub dependencies: Vec<String>,
-    pub pipeline_status: Option<String>,
-    pub repo_origin: Option<String>,
-    pub quick_links: Option<String>,
-}
 async fn fetch_user_packages(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     env: &str,
@@ -1442,15 +1235,6 @@ pub async fn get_dbschemas_and_tables_public(
     Ok(Json(dbschemas))
 }
 
-#[derive(Deserialize, JsonSchema)]
-pub struct PipelineStatusUpdateRequest {
-    pub env: String,
-    pub status: String,      // can be running, failed, passing, dormant
-    pub update_type: String, // can be schema, package, service
-    pub org_id: String,      // organization ID to filter
-    pub identifier: String,  // identifier to filter
-}
-
 #[openapi]
 #[put("/update-pipeline-status", format = "json", data = "<status_update>")]
 pub async fn update_pipeline_status(
@@ -1599,17 +1383,6 @@ pub async fn update_pipeline_status(
     }
 
     Ok(status::NoContent)
-}
-
-#[derive(Debug, Serialize, Deserialize, JsonSchema)]
-pub struct CreateOrganizationRequest {
-    pub name: String,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct CreateOrganizationResponse {
-    pub message: String,
-    pub id: i64,
 }
 
 use crate::models::schema::Organization;
@@ -1776,18 +1549,6 @@ pub async fn update_block_positions(
     }
 }
 
-#[derive(Serialize, JsonSchema)]
-pub struct WorkspaceSummary {
-    slug: String,
-    name: Option<String>,
-    is_active: bool,
-    is_admin: bool,
-    group_id: String,
-    infra_repo_origin: Option<String>,
-    quick_links: Option<String>,
-    version: Option<String>,
-}
-
 #[openapi()]
 #[get("/get-workspaces")]
 pub async fn get_workspaces(
@@ -1795,7 +1556,7 @@ pub async fn get_workspaces(
     _claims: Claims,
     groups_owned: GroupOwnerships,
     groups: GroupMemberships,
-) -> Result<Json<Vec<WorkspaceSummary>>, status::Custom<String>> {
+) -> Result<Json<Vec<WorkspaceSummaryResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::organization::dsl::*;
 
     let mut conn: diesel::r2d2::PooledConnection<ConnectionManager<PgConnection>> =
@@ -1809,7 +1570,7 @@ pub async fn get_workspaces(
     let ownerships: Vec<String> = groups_owned.0;
     let memberships: Vec<String> = groups.0;
 
-    let workspaces: Vec<WorkspaceSummary> = organization
+    let workspaces: Vec<WorkspaceSummaryResponse> = organization
         .filter(group_id.eq_any(memberships))
         .select((
             slug,
@@ -1838,7 +1599,7 @@ pub async fn get_workspaces(
         .into_iter()
         .map(
             |(_slug, _name, _is_active, _group_id, _infra_repo_origin, _quick_links, _version)| {
-                WorkspaceSummary {
+                WorkspaceSummaryResponse {
                     slug: _slug,
                     name: _name,
                     is_active: _is_active,
@@ -1931,7 +1692,7 @@ pub async fn get_workspace_details(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     groups_owned: GroupOwnerships,
     org_id: String,
-) -> Result<Json<WorkspaceSummary>, status::Custom<String>> {
+) -> Result<Json<WorkspaceSummaryResponse>, status::Custom<String>> {
     use crate::models::schema::schema::organization::dsl::*;
 
     let mut conn = rdb.get().map_err(|_| {
@@ -1974,7 +1735,7 @@ pub async fn get_workspace_details(
 
     match workspace {
         Some((_slug, _name, _is_active, _group_id, _infra_repo_origin, _quick_links, _version)) => {
-            Ok(Json(WorkspaceSummary {
+            Ok(Json(WorkspaceSummaryResponse {
                 slug: _slug,
                 name: _name,
                 is_active: _is_active,
@@ -2065,11 +1826,6 @@ pub async fn get_package_version_plain_text(
 
     // Return the version as plain text
     Ok(version_result)
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct VersionResponse {
-    version: String,
 }
 
 #[openapi()]
@@ -2178,14 +1934,6 @@ pub fn get_all_templates(
     Ok(Json(template_list))
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
-pub struct CreateSnapshotRequest {
-    pub version: String,
-    pub org_id: String,
-    pub infra_repo_origin: String,
-    pub quick_links: String,
-}
-
 #[openapi]
 #[post("/create-snapshot", data = "<create_snapshot_request>")]
 pub async fn create_snapshot(
@@ -2246,12 +1994,6 @@ pub async fn create_snapshot(
     Ok(Json(MessageResponse {
         message: "Snapshot record created and organization updated".to_string(),
     }))
-}
-
-#[derive(Serialize, Deserialize, JsonSchema)]
-pub struct SnapshotsResponse {
-    pub version: String,
-    pub created_at: DateTime<Utc>,
 }
 
 #[openapi]
