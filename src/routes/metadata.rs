@@ -1,7 +1,5 @@
-use crate::middlewares::api_jwt::APIClaims;
 use crate::middlewares::groups::GroupMemberships;
 use crate::middlewares::groups_owned::GroupOwnerships;
-use crate::middlewares::jwt::Claims;
 use crate::middlewares::IAMService_config::IAMService_config;
 use crate::middlewares::NotificationService_api_config::NotificationService_api_config;
 use crate::models::schema::{
@@ -9,8 +7,9 @@ use crate::models::schema::{
     PackageInsertable, Package_Env, Package_EnvInsertable, Service, ServiceInsertable,
     Service_Envs, Service_EnvsInsertable, Snapshots, SnapshotsInsertable, Templates,
 };
+use ginger_shared_rs::rocket_utils::{APIClaims, Claims};
 
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use rocket::http::Status;

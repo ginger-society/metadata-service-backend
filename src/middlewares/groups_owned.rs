@@ -1,5 +1,5 @@
-use super::jwt::Claims;
 use super::IAMService_config::IAMService_config;
+use ginger_shared_rs::rocket_utils::Claims;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket_okapi::request::OpenApiFromRequest;

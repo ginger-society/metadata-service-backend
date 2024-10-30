@@ -1,17 +1,16 @@
 use crate::middlewares::groups::GroupMemberships;
-use crate::middlewares::jwt::Claims;
 use crate::models::response::MessageResponse;
 use diesel::r2d2;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
+use ginger_shared_rs::rocket_utils::Claims;
 use r2d2_redis::RedisConnectionManager;
 
 use crate::middlewares::IAMService_config::IAMService_config;
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket_okapi::openapi;
-use IAMService::apis::default_api::{identity_get_group_memberships, routes_index};
-use IAMService::models::MessageResponse as OtherMessageResponse;
+use IAMService::apis::default_api::routes_index;
 
 pub mod metadata;
 
