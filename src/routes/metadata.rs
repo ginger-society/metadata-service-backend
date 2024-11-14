@@ -883,7 +883,7 @@ pub fn get_service_by_id(
         id: service_item.id,
         identifier: service_item.identifier,
         group_id: service_item.group_id,
-        db_schema_id: service_item.db_schema_id.unwrap(),
+        db_schema_id: service_item.db_schema_id.unwrap_or(String::from("")),
         dependencies: dependencies,
         tables: tables,
         organization_id: service_item.organization_id.unwrap_or(String::from("")),
