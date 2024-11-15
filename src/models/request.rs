@@ -46,6 +46,7 @@ pub struct UpdateServiceRequest {
     pub identifier: String,
     pub env: String,
     pub base_url: String,
+    pub base_url_ws: Option<String>,
     pub spec: String,
     pub dependencies: Vec<String>,
     pub tables: Vec<String>,

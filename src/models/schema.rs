@@ -116,6 +116,8 @@ pub mod schema {
             #[max_length = 30]
             version ->Varchar,
             pipeline_status ->Nullable<Varchar>,
+            #[max_length = 150]
+            base_url_ws ->Nullable<Varchar>,
             id ->BigInt,
             
         }
@@ -320,6 +322,7 @@ pub struct Service_Envs {
     pub updated_at:Option<DateTime<Utc>>,
     pub version:String,
     pub pipeline_status:Option<String>,
+    pub base_url_ws:Option<String>,
     pub id:i64,
     
 }
@@ -478,6 +481,7 @@ pub struct Service_EnvsInsertable {
     pub updated_at:Option<DateTime<Utc>>,
     pub version:String,
     pub pipeline_status:Option<String>,
+    pub base_url_ws:Option<String>,
     
 }
 

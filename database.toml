@@ -1,5 +1,5 @@
 [schema]
-url = "http://localhost:8001"
+url = "https://metadata-db-runtime-675766508318.asia-south1.run.app"
 lang = "Rust"
 orm = "Diesel"
 root = "src/models"

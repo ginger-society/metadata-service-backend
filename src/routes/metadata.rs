@@ -593,6 +593,7 @@ pub async fn update_or_create_service(
         )
         .set((
             service_env_dsl::base_url.eq(&service_request.base_url),
+            service_env_dsl::base_url_ws.eq(&service_request.base_url_ws),
             service_env_dsl::spec.eq(&service_request.spec),
             service_env_dsl::updated_at.eq(Utc::now()),
             service_env_dsl::version.eq(service_request
@@ -613,6 +614,7 @@ pub async fn update_or_create_service(
             parent_id: service_id,
             env: service_request.env.clone(),
             base_url: service_request.base_url.clone(),
+            base_url_ws: service_request.base_url_ws.clone(),
             spec: service_request.spec.clone(),
             updated_at: Some(Utc::now()),
             version: service_request.version.clone().expect("Version is missing"),
@@ -683,6 +685,7 @@ fn fetch_services_and_envs(
                 .map(|e| ServicesEnvTrimmedResponse {
                     env_key: e.env,
                     base_url: e.base_url,
+                    base_url_ws: e.base_url_ws,
                     updated_at: e.updated_at,
                     version: Some(e.version),
                     pipeline_status: e.pipeline_status,

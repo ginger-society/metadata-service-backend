@@ -74,6 +74,7 @@ pub struct ServicesEnvResponse {
 pub struct ServicesEnvTrimmedResponse {
     pub env_key: String,
     pub base_url: String,
+    pub base_url_ws: Option<String>,
     pub updated_at: Option<DateTime<Utc>>,
     pub version: Option<String>,
     pub pipeline_status: Option<String>,
