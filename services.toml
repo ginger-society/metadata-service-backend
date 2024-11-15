@@ -23,3 +23,5 @@ prod = "http://localhost:8081"
 prod_k8 = "http://localhost:8081"
 stage = "https://api-staging.gingersociety.org/metadata"
 stage_k8 = "http://metadata-service-api-service/metadata"
+
+[urls_ws]
