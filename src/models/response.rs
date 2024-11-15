@@ -168,3 +168,11 @@ pub struct SnapshotsResponse {
     pub version: String,
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Serialize, JsonSchema)]
+pub struct WorkspaceDetailResponse {
+    pub name: Option<String>,
+    pub block_positions: Option<String>,
+    pub is_active: bool,
+    pub is_admin: bool,
+}

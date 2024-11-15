@@ -21,7 +21,8 @@ use crate::models::response::{
     CreateOrUpdatePackageResponse, CreateOrganizationResponse, GetDbschemaAndTablesResponse,
     GetDbschemaByIdResponse, GetDbschemaResponse, PackageResponse, ServiceResponse,
     ServicesEnvResponse, ServicesEnvTrimmedResponse, ServicesTrimmedResponse, SnapshotsResponse,
-    UpdateDbschemaBranchResponse, UpdateServiceResponse, VersionResponse, WorkspaceSummaryResponse,
+    UpdateDbschemaBranchResponse, UpdateServiceResponse, VersionResponse, WorkspaceDetailResponse,
+    WorkspaceSummaryResponse,
 };
 
 use chrono::Utc;
@@ -33,12 +34,14 @@ use rocket::serde::json::Json;
 use rocket::State;
 use rocket_okapi::openapi;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::json;
 use uuid::Uuid;
 use IAMService::apis::default_api::{identity_create_group, IdentityCreateGroupParams};
 use IAMService::models::CreateGroupRequest;
-use NotificationService::apis::crate_api::{publish_message_to_group, PublishMessageToGroupParams};
+use NotificationService::apis::default_api::{
+    publish_message_to_group, PublishMessageToGroupParams,
+};
 use NotificationService::models::PublishRequest;
 
 #[openapi()]
@@ -1614,18 +1617,11 @@ pub async fn get_workspaces(
     Ok(Json(workspaces))
 }
 
-#[derive(Serialize, JsonSchema)]
-pub struct WorkspaceDetail {
-    name: Option<String>,
-    block_positions: Option<String>,
-    is_active: bool,
-    is_admin: bool,
-}
 async fn fetch_workspace(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     org_id: &str,
     is_admin: Option<&Vec<String>>,
-) -> Result<WorkspaceDetail, status::Custom<String>> {
+) -> Result<WorkspaceDetailResponse, status::Custom<String>> {
     use crate::models::schema::schema::organization::dsl::*;
 
     let mut conn = rdb.get().map_err(|_| {
@@ -1649,7 +1645,7 @@ async fn fetch_workspace(
 
     if let Some((_name, _block_positions, _is_active, _group_id)) = workspace {
         let is_admin_flag = is_admin.map_or(false, |ownerships| ownerships.contains(&_group_id));
-        Ok(WorkspaceDetail {
+        Ok(WorkspaceDetailResponse {
             name: _name,
             block_positions: _block_positions,
             is_active: _is_active,
@@ -1669,7 +1665,7 @@ pub async fn get_workspace(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     org_id: String,
     groups_owned: GroupOwnerships,
-) -> Result<Json<WorkspaceDetail>, status::Custom<String>> {
+) -> Result<Json<WorkspaceDetailResponse>, status::Custom<String>> {
     let workspace_detail = fetch_workspace(rdb, &org_id, Some(&groups_owned.0)).await?;
     Ok(Json(workspace_detail))
 }
@@ -1679,7 +1675,7 @@ pub async fn get_workspace(
 pub async fn get_workspace_public(
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     org_id: String,
-) -> Result<Json<WorkspaceDetail>, status::Custom<String>> {
+) -> Result<Json<WorkspaceDetailResponse>, status::Custom<String>> {
     let workspace_detail = fetch_workspace(rdb, &org_id, None).await?;
     Ok(Json(workspace_detail))
 }
