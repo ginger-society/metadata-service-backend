@@ -45,6 +45,7 @@ pub struct GetDbschemaByIdResponse {
     pub data: Option<String>,
     pub branch_id: Option<i64>,
     pub org_id: Option<String>,
+    pub group_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, JsonSchema)]

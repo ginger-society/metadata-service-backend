@@ -276,6 +276,7 @@ fn fetch_dbschema_by_id(
         data: None,
         branch_id: None,
         version: None,
+        group_id: result_dbschema.group_id
     };
 
     if let Some(branch_name_val) = branch {
