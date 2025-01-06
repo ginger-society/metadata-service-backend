@@ -409,9 +409,11 @@ pub fn update_dbschema_branch(
     branch_request: Json<UpdateDbschemaBranchRequest>,
     rdb: &State<Pool<ConnectionManager<PgConnection>>>,
     _claims: Claims,
+    groups: GroupMemberships
 ) -> Result<Json<UpdateDbschemaBranchResponse>, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl::*;
     use crate::models::schema::schema::dbschema_branch::dsl as branch_dsl;
+    let memberships: Vec<String> = groups.0;
 
     let mut conn = rdb.get().map_err(|_| {
         status::Custom(
@@ -430,6 +432,21 @@ pub fn update_dbschema_branch(
                 format!("Dbschema with id {} not found", schema_id),
             )
         })?;
+
+    // Check permission
+    if let Some(grp_id) = &db_schema_retrived.group_id {
+        if !memberships.contains(grp_id) {
+            return Err(status::Custom(
+                Status::Forbidden,
+                "Permission Denied: You are not authorized to update this schema branch.".to_string(),
+            ));
+        }
+    } else {
+        return Err(status::Custom(
+            Status::Forbidden,
+            "Permission Denied: Dbschema group ID is missing.".to_string(),
+        ));
+    }
 
     let _ = branch_dsl::dbschema_branch
         .filter(
