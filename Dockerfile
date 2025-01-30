@@ -16,7 +16,7 @@ RUN ginger-connector connect stage-k8
 RUN cargo build --release
 
 # Second stage: Create the minimal runtime image
-FROM gingersociety/rust-rocket-api-runner:latest
+FROM gingersociety/rust-rocket-api-builder:latest
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app/target/release/MetadataService /app/

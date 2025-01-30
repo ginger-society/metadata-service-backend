@@ -1577,7 +1577,7 @@ pub async fn get_workspaces(
     groups: GroupMemberships,
 ) -> Result<Json<Vec<WorkspaceSummaryResponse>>, status::Custom<String>> {
     use crate::models::schema::schema::organization::dsl::*;
-
+    println!("Handler invoked");
     let mut conn: diesel::r2d2::PooledConnection<ConnectionManager<PgConnection>> =
         rdb.get().map_err(|_| {
             status::Custom(
