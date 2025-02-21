@@ -91,7 +91,7 @@ pub async fn create_dbschema(
 
     // Insert new branch with name "main"
     let new_branch = Dbschema_BranchInsertable {
-        data: None,
+        data: create_request.schema.clone(),
         branch_name: "stage".to_string(),
         created_at: Utc::now(),
         updated_at: Utc::now(),

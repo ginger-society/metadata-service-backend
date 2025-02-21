@@ -11,6 +11,7 @@ pub struct CreateDbschemaRequest {
     pub repo_origin: String,
     pub version: String,
     pub quick_links: Option<String>,
+    pub schema: Option<String> // if we are creating it then we will use this schema to populate the schema
 }
 
 #[derive(Deserialize, JsonSchema, Serialize)]

@@ -1,27 +1,47 @@
-dir = "."
 lang = "Rust"
 organization_id = "ginger-society"
-service_type = "RPCEndpoint"
+dir = "."
 spec_url = "/openapi.json"
+service_type = "RPCEndpoint"
 
 [services."@ginger-society/NotificationService"]
-stage = "https://api-staging.gingersociety.org"
+prod = "https://api.gingersociety.org"
+dev = "http://localhost:3030"
 stage_k8 = "http://notification-service-service"
+stage = "https://api-staging.gingersociety.org"
+prod_k8 = "http://notification-service-service"
 
 [services."@ginger-society/IAMService"]
-dev = "http://localhost:8080/iam"
 stage = "https://api-staging.gingersociety.org/iam"
+dev = "http://localhost:8080/iam"
+prod = "https://api.gingersociety.org/iam"
 stage_k8 = "http://iam-service-api-service/iam"
+prod_k8 = "http://iam-service-api-service/iam"
 
 [portals_refs."@ginger-society/iam-frontend-users"]
-dev = "http://localhost:3001"
+prod = "https://iam.gingersociety.org"
 stage = "https://iam-staging.gingersociety.org"
+dev = "http://localhost:3001"
+
+[ws_refs."@ginger-society/IAMService"]
+stage = ""
+prod_k8 = ""
+dev = ""
+stage_k8 = ""
+prod = ""
+
+[ws_refs."@ginger-society/NotificationService"]
+prod_k8 = "ws://notification-service-service/notification"
+stage = "wss://api-staging.gingersociety.org/notification"
+dev = "ws://localhost:3030/notification"
+prod = "wss://api.gingersociety.org/notification"
+stage_k8 = "ws://notification-service-service/notification"
 
 [urls]
 dev = "http://localhost:8081/metadata"
-prod = "http://localhost:8081"
-prod_k8 = "http://localhost:8081"
-stage = "https://api-staging.gingersociety.org/metadata"
 stage_k8 = "http://metadata-service-api-service/metadata"
+prod = "https://api.gingersociety.org/metadata"
+prod_k8 = "http://metadata-service-api-service/metadata"
+stage = "https://api-staging.gingersociety.org/metadata"
 
 [urls_ws]
