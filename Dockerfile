@@ -1,4 +1,4 @@
-FROM gingersociety/rust-rocket-api-builder:latest as builder
+FROM containers.gingersociety.org/rust-rocket-api-builder:latest as builder
 
 # Create a new directory for the app
 WORKDIR /app
