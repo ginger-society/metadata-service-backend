@@ -3,8 +3,8 @@ url = "https://metadata-db-runtime-675766508318.asia-south1.run.app"
 lang = "Rust"
 orm = "Diesel"
 root = "src/models"
-schema_id = "66bbad42-200f-4b2f-ba0d-9feb1f3edbfa"
-cache_schema_id = "a3f5e631-8225-4ac5-85b9-71ecd107bb6c"
+schema_id = "885bde8a-5247-46f1-958c-a7d30fb06deb"
+cache_schema_id = "f0604500-6e42-4604-af80-784a3e74a50c"
 branch = "stage"
 
 [tables]
