@@ -10,7 +10,7 @@ ARG GINGER_TOKEN
 ENV GINGER_TOKEN=$GINGER_TOKEN
 
 RUN ginger-auth token-login $GINGER_TOKEN
-RUN ginger-connector connect stage-k8
+RUN ginger-connector connect prod-k8
 
 # Execute the build script
 RUN cargo build --release
