@@ -25,7 +25,7 @@ jobs:
         run: ginger-connector update-pipeline stage running
 
       - name: Set up cache for Cargo
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             target
