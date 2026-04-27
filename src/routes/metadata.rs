@@ -40,9 +40,9 @@ use uuid::Uuid;
 use IAMService::apis::default_api::{identity_create_group, IdentityCreateGroupParams};
 use IAMService::models::CreateGroupRequest;
 use NotificationService::apis::default_api::{
-    publish_message_to_group, PublishMessageToGroupParams,
+    publish_message_to_group, publish_message_to_group_api_land, PublishMessageToGroupApiLandParams, PublishMessageToGroupParams
 };
-use NotificationService::models::PublishRequest;
+use NotificationService::models::{PublishRequest, PublishType};
 
 #[openapi()]
 #[post("/dbschema", data = "<create_request>")]
@@ -1382,12 +1382,14 @@ pub async fn update_pipeline_status(
         .unwrap(),
     };
 
-    match publish_message_to_group(
+    match publish_message_to_group_api_land(
         &notification_config.0,
-        PublishMessageToGroupParams {
+        PublishMessageToGroupApiLandParams {
             group_id,
             publish_request: PublishRequest {
                 message: msg.to_string(),
+                prefix: "".to_string(),
+                pub_type: PublishType::Members,
             },
         },
     )

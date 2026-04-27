@@ -42,6 +42,6 @@ dev = "http://localhost:8081/metadata"
 stage_k8 = "http://metadata-service-api-service/metadata"
 prod = "https://api.gingersociety.org/metadata"
 prod_k8 = "http://metadata-service-api-service/metadata"
-stage = "https://api-staging.gingersociety.org/metadata"
+stage = "https://api.gingersociety.org/metadata"
 
 [urls_ws]
