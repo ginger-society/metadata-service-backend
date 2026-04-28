@@ -1388,7 +1388,7 @@ pub async fn update_pipeline_status(
             group_id,
             publish_request: PublishRequest {
                 message: msg.to_string(),
-                prefix: "".to_string(),
+                prefix: "dev_portal".to_string(),
                 pub_type: PublishType::Members,
             },
         },
