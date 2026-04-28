@@ -1262,7 +1262,7 @@ pub async fn update_pipeline_status(
     status_update: Json<PipelineStatusUpdateRequest>,
     _claims: APIClaims,
     notification_config: NotificationService_api_config,
-) -> Result<status::NoContent, status::Custom<String>> {
+) -> Result<status::Custom<String>, status::Custom<String>> {
     use crate::models::schema::schema::dbschema::dsl as dbschema_dsl;
     use crate::models::schema::schema::dbschema_branch::dsl as dbschema_branch_dsl;
     use crate::models::schema::schema::organization::dsl as org_dsl;
@@ -1395,7 +1395,9 @@ pub async fn update_pipeline_status(
     )
     .await
     {
-        Ok(_) => {}
+        Ok(_) => {
+            println!("Notification sent on WS")
+        }
         Err(e) => {
             return Err(status::Custom(
                 Status::InternalServerError,
@@ -1404,7 +1406,7 @@ pub async fn update_pipeline_status(
         }
     }
 
-    Ok(status::NoContent)
+    Ok(status::Custom(Status::Ok, "Notified all users".to_string()))
 }
 
 use crate::models::schema::Organization;
